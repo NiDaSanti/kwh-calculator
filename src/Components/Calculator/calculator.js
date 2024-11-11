@@ -15,7 +15,8 @@ const Calculator = () => {
 
     if (chargesValue > 0 && usageValues > 0) {
       const calculatedRate = chargesValue / usageValues
-      setRate(calculatedRate.toFixed(4))
+      const roundedRate = Math.floor(calculatedRate * 10) / 10
+      setRate(roundedRate.toFixed(2))
     } else {
       setRate(null)
     }
@@ -36,7 +37,7 @@ const Calculator = () => {
     const sunrunBills = []
     const sceBills = []
 
-    for (let i = 1; i <= years; i++) {
+    for (let i = 0; i <= years; i++) {
       const sunrunBill = initialBill * Math.pow(sunrunIncrease, i)
       const sceBill = initialBill * Math.pow(sceIncrease, i)
 
@@ -52,12 +53,15 @@ const Calculator = () => {
 
   useEffect(() => {
     if (rate && annualUsage > 0) {
-      calculateAnnualUsage()
-      if (avgPerMonthCost) {
-        generateProjectedBills(parseFloat(avgPerMonthCost))
-      }
+      calculateAnnualUsage(); // Only calculate annual usage if conditions are met
     }
-  }, [rate, annualUsage, avgPerMonthCost, calculateAnnualUsage])
+  }, [rate, annualUsage]); // Remove calculateAnnualUsage and avgPerMonthCost from the dependencies
+  
+  useEffect(() => {
+    if (avgPerMonthCost) {
+      generateProjectedBills(parseFloat(avgPerMonthCost)); // Now, handle projected bills based on avgPerMonthCost in a separate effect
+    }
+  }, [avgPerMonthCost]);
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -115,9 +119,9 @@ const Calculator = () => {
       <div className="result-container">
         {rate !== null && (
           <div>
-            <h3>The rate is ${rate} per kWh.</h3>
-            <h3>The average monthly cost is ${avgPerMonthCost}</h3>
-            <h3>Projected Monthly Electric Bills (Next 10 Years)</h3>
+            <h4>The rate is ${rate} per kWh.</h4>
+            <h4>The average monthly cost is ${avgPerMonthCost}</h4>
+            <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
             <table>
               <thead>
                 <tr>
@@ -129,7 +133,7 @@ const Calculator = () => {
               <tbody>
                 {projectedBills.sunrunBills.map((bill, index) => (
                   <tr key={index}>
-                    <td>{index + 1}</td>
+                    <td>{index}</td>
                     <td>{bill}</td>
                     <td>{projectedBills.sceBills[index]}</td>
                   </tr>
