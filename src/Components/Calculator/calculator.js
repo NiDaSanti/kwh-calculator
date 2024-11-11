@@ -15,7 +15,7 @@ const Calculator = () => {
 
     if (chargesValue > 0 && usageValues > 0) {
       const calculatedRate = chargesValue / usageValues
-      const roundedRate = Math.floor(calculatedRate * 10) / 10
+      const roundedRate = Math.floor(calculatedRate * 100) / 100
       setRate(roundedRate.toFixed(2))
     } else {
       setRate(null)
