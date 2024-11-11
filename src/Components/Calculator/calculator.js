@@ -57,7 +57,7 @@ const Calculator = () => {
         generateProjectedBills(parseFloat(avgPerMonthCost))
       }
     }
-  }, [rate, annualUsage, avgPerMonthCost])
+  }, [rate, annualUsage, avgPerMonthCost, calculateAnnualUsage])
 
   const handleSubmit = (e) => {
     e.preventDefault()
