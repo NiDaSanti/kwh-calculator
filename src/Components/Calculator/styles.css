@@ -1,0 +1,195 @@
+/* Reset some default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #F0F4F8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+  gap: 30px;
+}
+
+h2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+form {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 30px;  /* Adding a gap between form and table */
+}
+
+label {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+input {
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  transition: border-color 0.3s ease;
+}
+
+input:focus {
+  border-color: #6DBE45; /* SunRun Green */
+  outline: none;
+}
+
+button {
+  padding: 12px;
+  background-color: #6DBE45; /* SunRun Green */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 10px;
+}
+
+button:hover {
+  background-color: #5a9e3a; /* Darker Green */
+}
+
+button[type="button"] {
+  background-color: #FF6A13; /* SunRun Orange */
+}
+
+button[type="button"]:hover {
+  background-color: #e55a0d; /* Darker Orange */
+}
+
+div {
+  margin-top: 30px;
+}
+
+h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+table {
+  width: 100%;
+  margin-top: 40px;
+  margin-bottom: 30px;
+  border-collapse: collapse;
+  font-size: 1.2rem;  /* Medium font size for better readability */
+  text-align: center;  /* Center text in table */
+  margin-left: auto;  /* Center table horizontally */
+  margin-right: auto; /* Center table horizontally */
+}
+
+table, th, td {
+  border: 1px solid #ddd;
+  padding: 12px;  /* Increased padding for better spacing */
+}
+
+th {
+  background-color: #6DBE45; /* SunRun Green */
+  color: white;
+  font-weight: 700;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tbody tr:hover {
+  background-color: #f1f1f1;
+  cursor: pointer;
+}
+
+tfoot {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+footer {
+  font-size: 1rem;
+  color: #777;
+  margin-top: 50px;
+  text-align: center;
+}
+
+/* --- Responsive Design --- */
+
+/* Desktop and Tablets (Side by Side) */
+@media (min-width: 768px) {
+  .calculator-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 2000px;
+    gap: 40px;
+  }
+
+  form {
+    flex: 1;
+    margin-right: 30px;
+  }
+
+  div.result-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  table {
+    margin-top: 40px;
+    margin-bottom: 40px; /* Increase space below table */
+  }
+}
+
+/* Mobile (Stacked) */
+@media (max-width: 767px) {
+  body {
+    padding: 10px;
+  }
+
+  .calculator-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  div.result-container {
+    width: 100%;
+    text-align: center;
+  }
+
+  table {
+    margin-top: 20px;
+  }
+}
