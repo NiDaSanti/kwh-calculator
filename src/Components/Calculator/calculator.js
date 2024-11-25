@@ -92,10 +92,10 @@ const Calculator = () => {
   return (
     <div className="calculator-container">
       <div>
-        <h2>Energy Rate Calculator</h2>
+        <h2>SCE Rate Calculator</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Energy Charges ($):
+            Monthly Charges ($):
             <input
               type="number"
               step="0.01"
@@ -114,7 +114,7 @@ const Calculator = () => {
             />
           </label>
           <label>
-            Annual Usage:
+            Annual kWh Usage:
             <input
               type="number"
               step="0.01"
@@ -130,7 +130,7 @@ const Calculator = () => {
           {rate !== null && (
             <div className="sunrun-input-container">
               <div className="warning-label">
-                <p className="message-prompt">Please choose SunRun (kWh) rate:</p>
+                <p className="message-prompt">Please enter SunRun Monthly charge:</p>
               </div>
               <label>
                 SunRun's Monthly Cost:
@@ -141,7 +141,7 @@ const Calculator = () => {
                   onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} 
                   />
               </label>
-              <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Add SunRun Start Rate</button>
+              <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Calculate</button>
             </div>
           )}
         </div>

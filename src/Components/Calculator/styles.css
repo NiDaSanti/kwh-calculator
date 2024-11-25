@@ -13,7 +13,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: auto;
+  height: 100%;
   min-height: 100%;
   overflow-x: hidden;  /* Prevent horizontal scrolling */
 }
@@ -22,14 +22,23 @@ body {
 .calculator-container {
   background-color: #ffffff;
   border-radius: 12px;
-  /* box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); */
   padding: 40px;
   width: 100%;
   max-width: 1200px; /* Increase max-width for larger screens */
-  margin-top: 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;  /* Ensure no overflow */
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Fade-in and move up animation for the container */
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Header */
@@ -39,6 +48,15 @@ h2 {
   font-weight: 600;
   color: #FF6A00;
   margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeIn 0.8s ease-in-out 0.2s forwards;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 /* Form Layout */
@@ -62,13 +80,16 @@ input[type="number"] {
   border-radius: 8px;
   font-size: 16px;
   background-color: #f9f9f9;
-  transition: border-color 0.3s ease-in-out;
+  transition: border-color 0.3s ease-in-out, transform 0.2s ease;
   width: 100%; /* Ensure inputs are full-width */
+  transform: scale(1);
 }
 
+/* Input focus animation */
 input[type="number"]:focus {
   border-color: #FF6A00; /* Highlight border with SunRun Orange */
   outline: none;
+  transform: scale(1.05); /* Slightly enlarge the input field */
 }
 
 button {
@@ -78,8 +99,9 @@ button {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
   width: 100%; /* Full width for buttons */
+  transform: scale(1);
 }
 
 button[type="submit"] {
@@ -89,7 +111,7 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background-color: #e65c00;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.05);
 }
 
 button[type="button"] {
@@ -99,7 +121,7 @@ button[type="button"] {
 
 button[type="button"]:hover {
   background-color: #0056b3;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.05);
 }
 
 /* SunRun Section */
@@ -109,6 +131,9 @@ button[type="button"]:hover {
   background-color: #e5f8ff;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease-out 0.4s forwards;
 }
 
 .sunrun-input-container label {
@@ -123,7 +148,7 @@ button[type="button"]:hover {
 
 .sunrun-calculate-btn:hover {
   background-color: #218838;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.05);
 }
 
 .message-prompt {
@@ -134,12 +159,13 @@ button[type="button"]:hover {
 
 /* Result Section */
 .result-container {
-  margin-top: 40px;
   padding: 25px;
   background-color: #ffffff;
   border-radius: 12px;
-  /* box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05); */
   text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease-out 0.6s forwards;
 }
 
 .result-container h4 {
@@ -180,6 +206,20 @@ button[type="button"]:hover {
 .result-container table tbody tr:hover {
   background-color: #f1f1f1;
   cursor: pointer;
+  animation: rowHover 0.3s ease-in-out;
+}
+
+/* Row hover animation */
+@keyframes rowHover {
+  0% {
+    background-color: #f1f1f1;
+  }
+  50% {
+    background-color: #f9f9f9;
+  }
+  100% {
+    background-color: #f1f1f1;
+  }
 }
 
 /* Additional Styling for Flexibility */
