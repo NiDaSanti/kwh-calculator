@@ -5,6 +5,7 @@ const Calculator = () => {
   const [charges, setCharges] = useState('')
   const [usage, setUsage] = useState('')
   const [annualUsage, setAnnualUsage] = useState('')
+  const [sunRunAnnualRateIncrease, setSunRunAnnualRateIncrease] = useState('0.00')
   const [rate, setRate] = useState(null)
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
@@ -29,7 +30,7 @@ const Calculator = () => {
     }
   }
 
-  function generateProjectedBills(initialBill) {
+  function generateProjectedBills(initialBill, sunRunStartMonthlyCost) {
     const sunrunIncrease = 1.035  // 3.5% increase per year
     const sceIncrease = 1.105   // 10.5% increase per year
     const years = 10  // Number of years to project
@@ -38,7 +39,7 @@ const Calculator = () => {
     const sceBills = []
 
     for (let i = 0; i <= years; i++) {
-      const sunrunBill = initialBill * Math.pow(sunrunIncrease, i)
+      const sunrunBill = sunRunStartMonthlyCost * Math.pow(sunrunIncrease, i)
       const sceBill = initialBill * Math.pow(sceIncrease, i)
 
       sunrunBills.push(sunrunBill.toFixed(2))
@@ -53,13 +54,13 @@ const Calculator = () => {
 
   useEffect(() => {
     if (rate && annualUsage > 0) {
-      calculateAnnualUsage(); // Only calculate annual usage if conditions are met
+      calculateAnnualUsage() // Only calculate annual usage if conditions are met
     }
   }, [rate, annualUsage]); // Remove calculateAnnualUsage and avgPerMonthCost from the dependencies
   
   useEffect(() => {
     if (avgPerMonthCost) {
-      generateProjectedBills(parseFloat(avgPerMonthCost)); // Now, handle projected bills based on avgPerMonthCost in a separate effect
+      generateProjectedBills(parseFloat(avgPerMonthCost), parseFloat(sunRunAnnualRateIncrease)); // Now, handle projected bills based on avgPerMonthCost in a separate effect
     }
   }, [avgPerMonthCost]);
 
@@ -68,10 +69,21 @@ const Calculator = () => {
     calcuateRate()
   }
 
+  const handleSunRunMonthlyCost = (e) => {
+    if (rate && sunRunAnnualRateIncrease > 0) {
+      // Trigger the projected bills calculation with the SunRun start rate
+      const sunRunStartMonthlyCost = parseFloat(sunRunAnnualRateIncrease)
+      generateProjectedBills(parseFloat(avgPerMonthCost), sunRunStartMonthlyCost)
+    } else {
+      console.error("Rate or SunRun Start Monthly Cost is not set properly.")
+    }
+  }
+
   const handleReset = () => {
     setCharges('')
     setUsage('')
     setAnnualUsage('')
+    setSunRunAnnualRateIncrease('0.00')
     setRate(null)
     setAvgPerMonthCost(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
@@ -114,7 +126,27 @@ const Calculator = () => {
           <button type="submit">Calculate Rate</button>
           <button type="button" onClick={handleReset}>Reset</button>
         </form>
+        <div className="calculator-container">
+          {rate !== null && (
+            <div className="sunrun-input-container">
+              <div className="warning-label">
+                <p className="message-prompt">Please choose SunRun (kWh) rate:</p>
+              </div>
+              <label>
+                SunRun's Monthly Cost:
+                <input
+                  type="number"
+                  step="0.01"
+                  value={sunRunAnnualRateIncrease}
+                  onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} 
+                  />
+              </label>
+              <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Add SunRun Start Rate</button>
+            </div>
+          )}
+        </div>
       </div>
+
 
       <div className="result-container">
         {rate !== null && (
@@ -122,6 +154,7 @@ const Calculator = () => {
             <h4>The rate is ${rate} per kWh.</h4>
             <h4>The average monthly cost is ${avgPerMonthCost}</h4>
             <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
+            <div>This table demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
             <table>
               <thead>
                 <tr>
@@ -133,9 +166,9 @@ const Calculator = () => {
               <tbody>
                 {projectedBills.sunrunBills.map((bill, index) => (
                   <tr key={index}>
-                    <td>{index}</td>
-                    <td>{bill}</td>
-                    <td>{projectedBills.sceBills[index]}</td>
+                    <td>{index === 0 ? 'Current' : index}</td>
+                    <td>${bill}</td>
+                    <td>${projectedBills.sceBills[index]}</td>
                   </tr>
                 ))}
               </tbody>
