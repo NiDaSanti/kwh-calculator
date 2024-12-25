@@ -180,7 +180,7 @@ const Calculator = () => {
                 ))}
               </tbody>
             </table> */}
-            <div>
+            <div className="mobile-graph-layout">
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
                   year: xYearsLabel[index], // Year for the x-axis

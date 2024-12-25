@@ -277,6 +277,11 @@ button:hover {
 }
 
 @media (max-width: 480px) {
+  .mobile-graph-layout {
+    position: relative;
+    left: -67px;
+    width: 136%;
+  }
   h2 {
     font-size: 24px; /* Further reduce the header font size */
   }
