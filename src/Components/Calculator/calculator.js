@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
+//import { LineChart } from '@mui/x-charts/LineChart'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
 import './styles.css'  // Importing the updated CSS file
+
+const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
+
 
 const Calculator = () => {
   const [charges, setCharges] = useState('')
@@ -150,12 +156,13 @@ const Calculator = () => {
 
       <div className="result-container">
         {rate !== null && (
+          <>
           <div>
             <h4>The rate is ${rate} per kWh.</h4>
             <h4>The average monthly cost is ${avgPerMonthCost}</h4>
             <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
-            <div>This table demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
-            <table>
+            <div className="graph-message">This graph demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
+            {/* <table>
               <thead>
                 <tr>
                   <th>Year</th>
@@ -172,8 +179,27 @@ const Calculator = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table> */}
+            <div>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
+                  year: xYearsLabel[index], // Year for the x-axis
+                  SunRun: bill,              // SunRun bill for the 'SunRun' line
+                  SCE: projectedBills.sceBills[index] // SCE bill for the 'SCE' line
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="year" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="SunRun" stroke="#8884d8" />
+                  <Line type="monotone" dataKey="SCE" stroke="#82ca9d" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
           </div>
+          </>
         )}
       </div>
     </div>
