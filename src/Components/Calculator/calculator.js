@@ -192,8 +192,8 @@ const Calculator = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="SunRun" stroke="#8884d8" />
-                  <Line type="monotone" dataKey="SCE" stroke="#82ca9d" />
+                  <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
+                  <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
