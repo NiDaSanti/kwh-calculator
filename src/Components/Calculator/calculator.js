@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react'
 //import { LineChart } from '@mui/x-charts/LineChart'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
+import ElectricBoltRoundedIcon from '@mui/icons-material/ElectricBoltRounded'
+import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
+import SolarPowerTwoToneIcon from '@mui/icons-material/SolarPowerTwoTone'
+import Paper from '@mui/material/Paper'
+import Divider from '@mui/material/Divider'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
 
+const style = {
+  // py: 0,
+  // width: '100%',
+  // //maxWidth: 360,
+  // borderRadius: 2,
+  // border: '1px solid',
+  // borderColor: 'divider',
+  // backgroundColor: 'background.paper',
+  // marginBottom: '20px'
+}
 
 const Calculator = () => {
   const [charges, setCharges] = useState('')
@@ -101,7 +119,7 @@ const Calculator = () => {
         <h2>SCE Rate Calculator</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Monthly Charges ($):
+          <AttachMoneyIcon/> Monthly Charges
             <input
               type="number"
               step="0.01"
@@ -111,7 +129,7 @@ const Calculator = () => {
             />
           </label>
           <label>
-            Monthly kWh Usage:
+          <ElectricBoltRoundedIcon/> Monthly kWh Usage
             <input
               type="number"
               value={usage}
@@ -120,7 +138,7 @@ const Calculator = () => {
             />
           </label>
           <label>
-            Annual kWh Usage:
+            <BoltTwoToneIcon /> Annual kWh Usage
             <input
               type="number"
               step="0.01"
@@ -139,7 +157,7 @@ const Calculator = () => {
                 <p className="message-prompt">Please enter SunRun Monthly charge:</p>
               </div>
               <label>
-                SunRun's Monthly Cost:
+                <SolarPowerTwoToneIcon /> SunRun's Monthly Cost:
                 <input
                   type="number"
                   step="0.01"
@@ -153,33 +171,33 @@ const Calculator = () => {
         </div>
       </div>
 
-
       <div className="result-container">
         {rate !== null && (
           <>
-          <div>
-            <h4>The rate is ${rate} per kWh.</h4>
-            <h4>The average monthly cost is ${avgPerMonthCost}</h4>
-            <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
-            <div className="graph-message">This graph demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
-            {/* <table>
-              <thead>
-                <tr>
-                  <th>Year</th>
-                  <th>SunRun Projected Bill ($)</th>
-                  <th>SCE Projected Bill ($)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projectedBills.sunrunBills.map((bill, index) => (
-                  <tr key={index}>
-                    <td>{index === 0 ? 'Current' : index}</td>
-                    <td>${bill}</td>
-                    <td>${projectedBills.sceBills[index]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table> */}
+            <Paper sx={{p:3}}>
+              <List sx={style}>
+                <ListItem>
+                  <ListItemText primary={`The rate is ${rate} per kWh.`}/>
+                </ListItem>
+                <Divider component="li" />
+                <ListItem>
+                  <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
+                </ListItem>
+                <Divider component="li" />
+                <ListItem>
+                  <ListItemText primary='Projected Monthly Electric Bills (Next 10 Years)' />
+                </ListItem>
+                <Divider component="li" />
+                <ListItem>
+                  <ListItemText primary="This graph demonstrates SunRun's rate increase vs SCE rate increase over the years." />
+                </ListItem>
+                <Divider component="li" />
+              </List>
+              {/* <h4>The rate is ${rate} per kWh.</h4>
+              <h4>The average monthly cost is ${avgPerMonthCost}</h4>
+              <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
+              <div className="graph-message">This graph demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
+              <Divider  sx={{m: 3}}/> */}
             <div className="mobile-graph-layout">
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
@@ -197,8 +215,7 @@ const Calculator = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-
-          </div>
+          </Paper>
           </>
         )}
       </div>
