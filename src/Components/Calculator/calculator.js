@@ -15,14 +15,14 @@ import './styles.css'  // Importing the updated CSS file
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
 
 const style = {
-  // py: 0,
-  // width: '100%',
-  // //maxWidth: 360,
-  // borderRadius: 2,
-  // border: '1px solid',
-  // borderColor: 'divider',
-  // backgroundColor: 'background.paper',
-  // marginBottom: '20px'
+  py: 0,
+  width: '100%',
+  //maxWidth: 360,
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  backgroundColor: 'background.paper',
+  marginBottom: '20px'
 }
 
 const Calculator = () => {
