@@ -174,7 +174,7 @@ const Calculator = () => {
       <div className="result-container">
         {rate !== null && (
           <>
-            <Paper sx={{p:3}}>
+            <div>
               <List sx={style}>
                 <ListItem>
                   <ListItemText primary={`The rate is ${rate} per kWh.`}/>
@@ -191,13 +191,7 @@ const Calculator = () => {
                 <ListItem>
                   <ListItemText primary="This graph demonstrates SunRun's rate increase vs SCE rate increase over the years." />
                 </ListItem>
-                <Divider component="li" />
               </List>
-              {/* <h4>The rate is ${rate} per kWh.</h4>
-              <h4>The average monthly cost is ${avgPerMonthCost}</h4>
-              <h4>Projected Monthly Electric Bills (Next 10 Years)</h4>
-              <div className="graph-message">This graph demonstrates SunRun's rate increase vs SCE rate increase over the years.</div>
-              <Divider  sx={{m: 3}}/> */}
             <div className="mobile-graph-layout">
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
@@ -215,7 +209,7 @@ const Calculator = () => {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </Paper>
+          </div>
           </>
         )}
       </div>
