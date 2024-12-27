@@ -146,6 +146,7 @@ button[type="submit"]:hover {
 
 .sunrun-calculate-btn {
   background-color: #28a745; /* Green for SunRun start rate */
+  color: #ffffff;
 }
 
 .sunrun-calculate-btn:hover {

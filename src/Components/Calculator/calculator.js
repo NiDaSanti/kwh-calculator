@@ -137,7 +137,7 @@ const Calculator = () => {
       <div>
         <h2>SCE Rate Calculator</h2>
         <div>
-          <Button onClick={handleOpen} color='error' variant='outlined'>Important Notice</Button>
+          <Button onClick={handleOpen} color='error' variant='text'>Important Notice</Button>
             <Modal
               open={open}
               onClose={handleClose}
