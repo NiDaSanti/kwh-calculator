@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react'
 //import { LineChart } from '@mui/x-charts/LineChart'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
-import ElectricBoltRoundedIcon from '@mui/icons-material/ElectricBoltRounded'
 import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
 import SolarPowerTwoToneIcon from '@mui/icons-material/SolarPowerTwoTone'
-import Paper from '@mui/material/Paper'
 import Divider from '@mui/material/Divider'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
+import PowerOutlinedIcon from '@mui/icons-material/PowerOutlined'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Modal from '@mui/material/Modal'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
@@ -25,6 +28,18 @@ const style = {
   marginBottom: '20px'
 }
 
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  backgroundColor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4
+}
+
 const Calculator = () => {
   const [charges, setCharges] = useState('')
   const [usage, setUsage] = useState('')
@@ -33,6 +48,10 @@ const Calculator = () => {
   const [rate, setRate] = useState(null)
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
+  const [open, setOpen] = useState(false)
+  
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
 
   function calcuateRate() {
     const chargesValue = parseFloat(charges)
@@ -117,6 +136,24 @@ const Calculator = () => {
     <div className="calculator-container">
       <div>
         <h2>SCE Rate Calculator</h2>
+        <div>
+          <Button onClick={handleOpen} color='error' variant='outlined'>Important Notice</Button>
+            <Modal
+              open={open}
+              onClose={handleClose}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+            <Box sx={modalStyle}>
+              <Typography id="modal-modal-title" variant="h6" component="h2">
+                IMPORTANT NOTICE!
+              </Typography>
+              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                The rate increase for SCE is based on a 10.10% increase year over year. Sunrun is set at 3.5% year over year. The SCE rates may not be accurate. 
+              </Typography>
+            </Box>
+          </Modal>
+        </div>
         <form onSubmit={handleSubmit}>
           <label>
           <AttachMoneyIcon/> Monthly Charges
@@ -129,7 +166,7 @@ const Calculator = () => {
             />
           </label>
           <label>
-          <ElectricBoltRoundedIcon/> Monthly kWh Usage
+          <PowerOutlinedIcon/> Monthly kWh Usage
             <input
               type="number"
               value={usage}
@@ -148,7 +185,7 @@ const Calculator = () => {
             />
           </label>
           <button type="submit">Calculate Rate</button>
-          <button type="button" onClick={handleReset}>Reset</button>
+          <button className='reset' type="button" onClick={handleReset}>Reset</button>
         </form>
         <div className="calculator-container">
           {rate !== null && (
