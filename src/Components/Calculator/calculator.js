@@ -20,7 +20,6 @@ const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "20
 const style = {
   py: 0,
   width: '100%',
-  //maxWidth: 360,
   borderRadius: 2,
   border: '1px solid',
   borderColor: 'divider',
@@ -149,7 +148,7 @@ const Calculator = () => {
                 IMPORTANT NOTICE!
               </Typography>
               <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                The rate increase for SCE is based on a 10.10% increase year over year. Sunrun is set at 3.5% year over year. The SCE rates may not be accurate. 
+                The rate increase for SCE is based on a 10.10% increase year over year for a period of ten years. Sunrun is set at 3.5% year over year. The SCE rates may not be accurate. 
               </Typography>
             </Box>
           </Modal>
@@ -226,7 +225,7 @@ const Calculator = () => {
                 </ListItem>
                 <Divider component="li" />
                 <ListItem>
-                  <ListItemText primary="This graph demonstrates SunRun's rate increase vs SCE rate increase over the years." />
+                  <ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." />
                 </ListItem>
               </List>
             <div className="mobile-graph-layout">
