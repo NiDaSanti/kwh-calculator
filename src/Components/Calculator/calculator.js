@@ -27,17 +27,17 @@ const style = {
   marginBottom: '20px'
 }
 
-const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  backgroundColor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4
-}
+// const modalStyle = {
+//   position: 'absolute',
+//   top: '50%',
+//   left: '50%',
+//   transform: 'translate(-50%, -50%)',
+//   width: 400,
+//   backgroundColor: 'background.paper',
+//   border: '2px solid #000',
+//   boxShadow: 24,
+//   p: 4
+// }
 
 const Calculator = () => {
   const [charges, setCharges] = useState('')
@@ -132,124 +132,88 @@ const Calculator = () => {
   }
 
   return (
-    <div className="calculator-container">
-      <div>
-        <h2>SCE Rate Calculator</h2>
-        <div>
-          <Button onClick={handleOpen} color='error' variant='text'>Important Notice</Button>
-            <Modal
-              open={open}
-              onClose={handleClose}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-            <Box sx={modalStyle}>
-              <Typography id="modal-modal-title" variant="h6" component="h2">
-                IMPORTANT NOTICE!
-              </Typography>
-              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                The rate increase for SCE is based on a 10.10% increase year over year for a period of ten years. Sunrun is set at 3.5% year over year. The SCE rates may not be accurate. 
-              </Typography>
-            </Box>
-          </Modal>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <label>
-          <AttachMoneyIcon/> Monthly Charges
-            <input
-              type="number"
-              step="0.01"
-              value={charges}
-              onChange={(e) => setCharges(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-          <PowerOutlinedIcon/> Monthly kWh Usage
-            <input
-              type="number"
-              value={usage}
-              onChange={(e) => setUsage(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            <BoltTwoToneIcon /> Annual kWh Usage
-            <input
-              type="number"
-              step="0.01"
-              value={annualUsage}
-              onChange={(e) => setAnnualUsage(e.target.value)}
-              required
-            />
-          </label>
-          <button type="submit">Calculate Rate</button>
-          <button className='reset' type="button" onClick={handleReset}>Reset</button>
-        </form>
-        <div className="calculator-container">
-          {rate !== null && (
-            <div className="sunrun-input-container">
-              <div className="warning-label">
-                <p className="message-prompt">Please enter SunRun Monthly charge:</p>
-              </div>
-              <label>
-                <SolarPowerTwoToneIcon /> SunRun's Monthly Cost:
-                <input
-                  type="number"
-                  step="0.01"
-                  value={sunRunAnnualRateIncrease}
-                  onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} 
-                  />
-              </label>
-              <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Calculate</button>
-            </div>
-          )}
-        </div>
-      </div>
+<div className="calculator-container">
+  <div className="calculator-header">
+    <h2>SCE Rate Calculator</h2>
+    {/* <Button onClick={handleOpen} color="error" variant="text">Important Notice</Button>
+    <Modal open={open} onClose={handleClose}>
+      <Box sx={modalStyle}>
+        <Typography variant="h6">IMPORTANT NOTICE!</Typography>
+        <Typography sx={{ mt: 2 }}>
+          The rate increase for SCE is based on a 10.10% increase year over year for a period of ten years. 
+          Sunrun is set at 3.5% year over year. The SCE rates may not be accurate.
+        </Typography>
+      </Box>
+    </Modal> */}
+  </div>
 
-      <div className="result-container">
-        {rate !== null && (
-          <>
-            <div>
-              <List sx={style}>
-                <ListItem>
-                  <ListItemText primary={`The rate is ${rate} per kWh.`}/>
-                </ListItem>
-                <Divider component="li" />
-                <ListItem>
-                  <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem>
-                  <ListItemText primary='Projected Monthly Electric Bills (Next 10 Years)' />
-                </ListItem>
-                <Divider component="li" />
-                <ListItem>
-                  <ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." />
-                </ListItem>
-              </List>
-            <div className="mobile-graph-layout">
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
-                  year: xYearsLabel[index], // Year for the x-axis
-                  SunRun: bill,              // SunRun bill for the 'SunRun' line
-                  SCE: projectedBills.sceBills[index] // SCE bill for the 'SCE' line
-                }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
-                  <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          </>
-        )}
-      </div>
+  <form className="calculator-form" onSubmit={handleSubmit}>
+    <div className="form-group">
+      <label><AttachMoneyIcon /> Monthly Charges</label>
+      <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} required />
     </div>
+    
+    <div className="form-group">
+      <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
+      <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} required />
+    </div>
+    
+    <div className="form-group">
+      <label><BoltTwoToneIcon /> Annual kWh Usage</label>
+      <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} required />
+    </div>
+
+    <div className="button-group">
+      <button type="submit">Calculate Rate</button>
+      <button className="reset" type="button" onClick={handleReset}>Reset</button>
+    </div>
+  </form>
+
+  {rate !== null && (
+    <div className="sunrun-input-container">
+      <p className="warning-label">Please enter SunRun Monthly charge:</p>
+      <label><SolarPowerTwoToneIcon /> SunRun's Monthly Cost:</label>
+      <input type="number" step="0.01" value={sunRunAnnualRateIncrease} onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} />
+      <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost}>Calculate</button>
+    </div>
+  )}
+
+  <div className="result-container">
+    {rate !== null && (
+      <>
+        <List sx={style}>
+          <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} /></ListItem>
+          <Divider component="li" />
+          <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} /></ListItem>
+          <Divider component="li" />
+          <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
+          <Divider component="li" />
+          <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem>
+        </List>
+
+        <div className="mobile-graph-layout">
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
+              year: xYearsLabel[index], 
+              SunRun: bill,             
+              SCE: projectedBills.sceBills[index]
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
+              <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+  </div>
+</div>
+
+  
   )
 }
 
