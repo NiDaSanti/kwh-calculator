@@ -24,9 +24,15 @@ const style = {
   border: '1px solid',
   borderColor: 'divider',
   backgroundColor: 'background.paper',
-  marginBottom: '20px'
+  marginBottom: '20px',
+  maxWidth: '600px'
 }
 
+const textBoxStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+}
 // const modalStyle = {
 //   position: 'absolute',
 //   top: '50%',
@@ -39,6 +45,7 @@ const style = {
 //   p: 4
 // }
 
+
 const Calculator = () => {
   const [charges, setCharges] = useState('')
   const [usage, setUsage] = useState('')
@@ -47,10 +54,10 @@ const Calculator = () => {
   const [rate, setRate] = useState(null)
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
-  const [open, setOpen] = useState(false)
+  // const [open, setOpen] = useState(false)
   
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
+  // const handleOpen = () => setOpen(true)
+  // const handleClose = () => setOpen(false)
 
   function calcuateRate() {
     const chargesValue = parseFloat(charges)
@@ -181,33 +188,49 @@ const Calculator = () => {
   <div className="result-container">
     {rate !== null && (
       <>
-        <List sx={style}>
-          <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} /></ListItem>
-          <Divider component="li" />
-          <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} /></ListItem>
-          <Divider component="li" />
-          <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
-          <Divider component="li" />
-          <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem>
-        </List>
+        <Box sx={textBoxStyle}>
+          <List sx={style}>
+            <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} /></ListItem>
+            <Divider component="li" />
+            <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} /></ListItem>
+            <Divider component="li" />
+            {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
+            <Divider component="li" />
+            <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem> */}
+          </List> 
+        </Box>
+        <Typography variant="h5" gutterBottom>Projected monthly bill (10 years)</Typography>
+        <Typography variant="h6" gutterBottom>Sunrun's rate vs SCE rates.</Typography>
 
         <div className="mobile-graph-layout">
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
               year: xYearsLabel[index], 
               SunRun: bill,             
               SCE: projectedBills.sceBills[index]
             }))}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year" />
-              <YAxis />
+              
+              {/* Adjust the XAxis to rotate labels for better readability */}
+              <XAxis 
+                dataKey="year" 
+                tick={{ fontSize: 12 }} 
+                angle={-45}  // Rotate the labels for better fit
+                textAnchor="end" // Align text to end (makes the rotated text readable)
+              />
+              
+              <YAxis tick={{ fontSize: 12 }} />
+              
               <Tooltip />
-              <Legend />
+              
+              {/* Remove Legend on mobile to save space */}
+              {window.innerWidth > 600 && <Legend />}  {/* Show legend only on larger screens */}
+
               <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
               <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+          </div>
       </>
     )}
   </div>

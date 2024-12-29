@@ -145,6 +145,14 @@ button.sunrun-calculate-btn:hover {
   color: #333;
 }
 
+/* Mobile-specific styles */
+@media (max-width: 600px) {
+  .mobile-graph-layout {
+    width: 100%;  /* Ensure it takes full width */
+    margin-top: 20px;  /* Optional: Add some margin for better spacing */
+  }
+}
+
 /* Responsive Layout */
 @media (min-width: 600px) {
   .calculator-container {
