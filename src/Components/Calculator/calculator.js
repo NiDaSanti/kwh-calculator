@@ -45,7 +45,6 @@ const textBoxStyle = {
 //   p: 4
 // }
 
-
 const Calculator = () => {
   const [charges, setCharges] = useState('')
   const [usage, setUsage] = useState('')
@@ -203,14 +202,13 @@ const Calculator = () => {
         <Typography variant="h6" gutterBottom>Sunrun's rate vs SCE rates.</Typography>
 
         <div className="mobile-graph-layout">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={400}>
             <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
               year: xYearsLabel[index], 
               SunRun: bill,             
               SCE: projectedBills.sceBills[index]
             }))}>
               <CartesianGrid strokeDasharray="3 3" />
-              
               {/* Adjust the XAxis to rotate labels for better readability */}
               <XAxis 
                 dataKey="year" 
@@ -218,14 +216,10 @@ const Calculator = () => {
                 angle={-45}  // Rotate the labels for better fit
                 textAnchor="end" // Align text to end (makes the rotated text readable)
               />
-              
               <YAxis tick={{ fontSize: 12 }} />
-              
               <Tooltip />
-              
               {/* Remove Legend on mobile to save space */}
               {window.innerWidth > 600 && <Legend />}  {/* Show legend only on larger screens */}
-
               <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
               <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
             </LineChart>
@@ -233,10 +227,8 @@ const Calculator = () => {
           </div>
       </>
     )}
+    </div>
   </div>
-</div>
-
-  
   )
 }
 
