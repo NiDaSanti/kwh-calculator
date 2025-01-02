@@ -189,15 +189,20 @@ const Calculator = () => {
       <>
         <Box sx={textBoxStyle}>
           <List sx={style}>
-            <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} /></ListItem>
+            <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} />
+              <Typography variant="p" gutterBottom>({charges} / {usage} = {rate})</Typography>
+            </ListItem>
             <Divider component="li" />
-            <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} /></ListItem>
+            <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
+              <Typography variant="p" gutterBottom>({annualUsage} X {rate} / 12)</Typography>
+            </ListItem>
             <Divider component="li" />
             {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
             <Divider component="li" />
             <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem> */}
           </List> 
         </Box>
+        <Typography variant="p" gutterBottom>{charges} / {usage} = {rate}</Typography>
         <Typography variant="h5" gutterBottom>Projected monthly bill (10 years)</Typography>
         <Typography variant="h6" gutterBottom>Sunrun's rate vs SCE rates.</Typography>
 
@@ -229,7 +234,7 @@ const Calculator = () => {
     )}
     </div>
   </div>
-  )
+    )
 }
 
 export default Calculator
