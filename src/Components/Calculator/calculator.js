@@ -202,7 +202,6 @@ const Calculator = () => {
             <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem> */}
           </List> 
         </Box>
-        <Typography variant="p" gutterBottom>{charges} / {usage} = {rate}</Typography>
         <Typography variant="h5" gutterBottom>Projected monthly bill (10 years)</Typography>
         <Typography variant="h6" gutterBottom>Sunrun's rate vs SCE rates.</Typography>
 
