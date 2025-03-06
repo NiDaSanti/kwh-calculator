@@ -202,16 +202,19 @@ const Calculator = () => {
       <>
         <Box sx={textBoxStyle}>
           <List sx={style}>
-            <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} />
-              <Typography variant="p" gutterBottom>($ {charges} / {usage} = {rate})</Typography>
+            <ListItem>
+              <ListItemText primary={`The rate is ${rate} per kWh.`} />
+              <Typography variant="p" gutterBottom>($ {charges} / {usage})</Typography>
             </ListItem>
             <Divider component="li" />
-            <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
-              <Typography variant="p" gutterBottom>({annualUsage} X {rate} / 12)</Typography>
+            <ListItem>
+              <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
+              <Typography variant="p" gutterBottom>({annualUsage} X $ {rate} / 12)</Typography>
             </ListItem>
             <Divider component="li" />
             <ListItem>
               <ListItemText primary={`The monthly bill with increase is $ ${projectedMonthlyBill}`}/>
+              <Typography variant="p" gutterBottom>($ {avgPerMonthCost} + {scePecentage} / 100)</Typography>
             </ListItem>
             <Divider component="li" />
             {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
@@ -250,7 +253,7 @@ const Calculator = () => {
     )}
     </div>
   </div>
-    )
+  )
 }
 
 export default Calculator
