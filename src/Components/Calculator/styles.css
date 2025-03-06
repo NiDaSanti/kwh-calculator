@@ -7,8 +7,11 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f9f9f9;
-  color: #333;
+  background: linear-gradient(to bottom, #F0F8FF, #FFF8E1); /* Soft blue to warm yellow */
+  color: #333; /* Dark text for readability */
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 /* Main Container */

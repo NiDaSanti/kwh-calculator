@@ -13,6 +13,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Modal from '@mui/material/Modal'
+import PercentIcon from '@mui/icons-material/Percent'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
@@ -49,6 +50,8 @@ const Calculator = () => {
   const [charges, setCharges] = useState('')
   const [usage, setUsage] = useState('')
   const [annualUsage, setAnnualUsage] = useState('')
+  const [scePecentage, setScePecentage] = useState('')
+  const [projectedMonthlyBill, setProjectedMonthlyBill] = useState(null)
   const [sunRunAnnualRateIncrease, setSunRunAnnualRateIncrease] = useState('0.00')
   const [rate, setRate] = useState(null)
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
@@ -72,15 +75,19 @@ const Calculator = () => {
   }
 
   function calculateAnnualUsage() {
-    if (rate && annualUsage > 0) {
+    if (rate && annualUsage > 0 && scePecentage > 0) {
       const avgMonthlyBill = (annualUsage * parseFloat(rate)) / 12
+      const projectedFutureAvg = avgMonthlyBill * (scePecentage / 100)
+      const totalProjectedMontlyBill = avgMonthlyBill + projectedFutureAvg
+
       setAvgPerMonthCost(avgMonthlyBill.toFixed(2))
+      setProjectedMonthlyBill(totalProjectedMontlyBill.toFixed(2))
     }
   }
 
   function generateProjectedBills(initialBill, sunRunStartMonthlyCost) {
     const sunrunIncrease = 1.035  // 3.5% increase per year
-    const sceIncrease = 1.105   // 10.5% increase per year
+    const sceIncrease = 1 + parseFloat(scePecentage) / 100  // percent inputted by the user
     const years = 10  // Number of years to project
 
     const sunrunBills = []
@@ -131,6 +138,7 @@ const Calculator = () => {
     setCharges('')
     setUsage('')
     setAnnualUsage('')
+    setScePecentage('')
     setSunRunAnnualRateIncrease('0.00')
     setRate(null)
     setAvgPerMonthCost(null)
@@ -169,6 +177,11 @@ const Calculator = () => {
       <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} required />
     </div>
 
+    <div className="form-group">
+      <label><PercentIcon /> Rate Increase Percentage:</label>
+      <input type="number" value={scePecentage} onChange={(e) => setScePecentage(e.target.value)} required />
+    </div>
+
     <div className="button-group">
       <button type="submit">Calculate Rate</button>
       <button className="reset" type="button" onClick={handleReset}>Reset</button>
@@ -190,11 +203,15 @@ const Calculator = () => {
         <Box sx={textBoxStyle}>
           <List sx={style}>
             <ListItem><ListItemText primary={`The rate is ${rate} per kWh.`} />
-              <Typography variant="p" gutterBottom>({charges} / {usage} = {rate})</Typography>
+              <Typography variant="p" gutterBottom>($ {charges} / {usage} = {rate})</Typography>
             </ListItem>
             <Divider component="li" />
             <ListItem><ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
               <Typography variant="p" gutterBottom>({annualUsage} X {rate} / 12)</Typography>
+            </ListItem>
+            <Divider component="li" />
+            <ListItem>
+              <ListItemText primary={`The monthly bill with increase is $ ${projectedMonthlyBill}`}/>
             </ListItem>
             <Divider component="li" />
             {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
