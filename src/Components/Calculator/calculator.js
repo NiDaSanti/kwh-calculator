@@ -54,6 +54,7 @@ const Calculator = () => {
   const [projectedMonthlyBill, setProjectedMonthlyBill] = useState(null)
   const [sunRunAnnualRateIncrease, setSunRunAnnualRateIncrease] = useState('0.00')
   const [rate, setRate] = useState(null)
+  const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
   // const [open, setOpen] = useState(false)
@@ -61,10 +62,10 @@ const Calculator = () => {
   // const handleOpen = () => setOpen(true)
   // const handleClose = () => setOpen(false)
 
-  function calcuateRate() {
+  function calculateRate() {
     const chargesValue = parseFloat(charges)
     const usageValues = parseFloat(usage)
-
+  
     if (chargesValue > 0 && usageValues > 0) {
       const calculatedRate = chargesValue / usageValues
       const roundedRate = Math.floor(calculatedRate * 100) / 100
@@ -86,25 +87,31 @@ const Calculator = () => {
   }
 
   function generateProjectedBills(initialBill, sunRunStartMonthlyCost) {
-    const sunrunIncrease = 1.035  // 3.5% increase per year
-    const sceIncrease = 1 + parseFloat(scePecentage) / 100  // percent inputted by the user
-    const years = 10  // Number of years to project
-
+    const sunrunIncrease = 1.035 // 3.5% annual increase
+    const sceInitialIncrease = 1 + parseFloat(scePecentage) / 100
+    const sceMinIncrease = 1 + parseFloat(projectedFutureRateIncrease) / 100
+    const years = 10
+  
     const sunrunBills = []
     const sceBills = []
-
+  
     for (let i = 0; i <= years; i++) {
       const sunrunBill = sunRunStartMonthlyCost * Math.pow(sunrunIncrease, i)
-      const sceBill = initialBill * Math.pow(sceIncrease, i)
-
+  
+      let sceBill
+      if (i === 0) {
+        sceBill = initialBill
+      } else if (i === 1) {
+        sceBill = sceBills[0] * sceInitialIncrease
+      } else {
+        sceBill = sceBills[i - 1] * sceMinIncrease
+      }
+  
       sunrunBills.push(sunrunBill.toFixed(2))
       sceBills.push(sceBill.toFixed(2))
     }
-
-    setProjectedBills({
-      sunrunBills,
-      sceBills
-    })
+  
+    setProjectedBills({ sunrunBills, sceBills })
   }
 
   useEffect(() => {
@@ -121,7 +128,7 @@ const Calculator = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    calcuateRate()
+    calculateRate()
   }
 
   const handleSunRunMonthlyCost = (e) => {
@@ -141,6 +148,7 @@ const Calculator = () => {
     setScePecentage('')
     setSunRunAnnualRateIncrease('0.00')
     setRate(null)
+    setProjectedFutureRateIncrease(null)
     setAvgPerMonthCost(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
   }
@@ -182,10 +190,16 @@ const Calculator = () => {
       <input type="number" value={scePecentage} onChange={(e) => setScePecentage(e.target.value)} required />
     </div>
 
+    <div className="form-group">
+      <label><PercentIcon /> Minimal Rate Percentage:</label>
+      <input type="number" value={projectedFutureRateIncrease} onChange={(e) => setProjectedFutureRateIncrease(e.target.value)} required />
+    </div>
+
     <div className="button-group">
       <button type="submit">Calculate Rate</button>
       <button className="reset" type="button" onClick={handleReset}>Reset</button>
     </div>
+
   </form>
 
   {rate !== null && (
