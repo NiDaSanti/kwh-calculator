@@ -76,9 +76,11 @@ const Calculator = () => {
   }
 
   function calculateAnnualUsage() {
-    if (rate && annualUsage > 0 && scePecentage > 0) {
+    const parsedPercentage = parseFloat(scePecentage)
+
+    if (rate && annualUsage > 0 && !Number.isNaN(parsedPercentage)) {
       const avgMonthlyBill = (annualUsage * parseFloat(rate)) / 12
-      const projectedFutureAvg = avgMonthlyBill * (scePecentage / 100)
+      const projectedFutureAvg = avgMonthlyBill * (parsedPercentage / 100)
       const totalProjectedMontlyBill = avgMonthlyBill + projectedFutureAvg
 
       setAvgPerMonthCost(avgMonthlyBill.toFixed(2))
@@ -186,7 +188,7 @@ const Calculator = () => {
     </div>
 
     <div className="form-group">
-      <label><PercentIcon /> Rate Increase Percentage:</label>
+      <label><PercentIcon /> Rate Change Percentage (increase or decrease):</label>
       <input type="number" value={scePecentage} onChange={(e) => setScePecentage(e.target.value)} required />
     </div>
 
@@ -227,8 +229,8 @@ const Calculator = () => {
             </ListItem>
             <Divider component="li" />
             <ListItem>
-              <ListItemText primary={`The monthly bill with increase is $ ${projectedMonthlyBill}`}/>
-              <Typography variant="p" gutterBottom>($ {avgPerMonthCost} + {scePecentage} / 100)</Typography>
+              <ListItemText primary={`The monthly bill with change is $ ${projectedMonthlyBill}`}/>
+              <Typography variant="p" gutterBottom>({avgPerMonthCost} × (1 + {scePecentage} / 100))</Typography>
             </ListItem>
             <Divider component="li" />
             {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
