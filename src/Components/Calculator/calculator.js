@@ -90,29 +90,34 @@ const Calculator = () => {
 
   function generateProjectedBills(initialBill, sunRunStartMonthlyCost) {
     const sunrunIncrease = 1.035 // 3.5% annual increase
-    const sceInitialIncrease = 1 + parseFloat(scePecentage) / 100
-    const sceMinIncrease = 1 + parseFloat(projectedFutureRateIncrease) / 100
-    const years = 10
-  
+    const parsedInitialIncrease = parseFloat(scePecentage)
+    const parsedMinIncrease = parseFloat(projectedFutureRateIncrease)
+    const sceInitialIncrease = 1 + (Number.isNaN(parsedInitialIncrease) ? 0 : parsedInitialIncrease) / 100
+    const sceMinIncrease = 1 + (Number.isNaN(parsedMinIncrease) ? 0 : parsedMinIncrease) / 100
+    const totalYears = xYearsLabel.length
+
+    if (!Number.isFinite(initialBill) || !Number.isFinite(sunRunStartMonthlyCost) || initialBill <= 0 || sunRunStartMonthlyCost <= 0) {
+      setProjectedBills({ sunrunBills: [], sceBills: [] })
+      return
+    }
+
     const sunrunBills = []
     const sceBills = []
-  
-    for (let i = 0; i <= years; i++) {
-      const sunrunBill = sunRunStartMonthlyCost * Math.pow(sunrunIncrease, i)
-  
-      let sceBill
-      if (i === 0) {
-        sceBill = initialBill
-      } else if (i === 1) {
-        sceBill = sceBills[0] * sceInitialIncrease
-      } else {
-        sceBill = sceBills[i - 1] * sceMinIncrease
-      }
-  
-      sunrunBills.push(sunrunBill.toFixed(2))
-      sceBills.push(sceBill.toFixed(2))
+
+    let currentSunrunBill = sunRunStartMonthlyCost * sunrunIncrease
+    let currentSceBill = initialBill * sceInitialIncrease
+
+    sunrunBills.push(currentSunrunBill.toFixed(2))
+    sceBills.push(currentSceBill.toFixed(2))
+
+    for (let i = 1; i < totalYears; i++) {
+      currentSunrunBill *= sunrunIncrease
+      currentSceBill *= sceMinIncrease
+
+      sunrunBills.push(currentSunrunBill.toFixed(2))
+      sceBills.push(currentSceBill.toFixed(2))
     }
-  
+
     setProjectedBills({ sunrunBills, sceBills })
   }
 
