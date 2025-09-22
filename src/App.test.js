@@ -1,8 +1,50 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import Calculator from './Components/Calculator/calculator'
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
-});
+const fillRequiredFields = (rateChange) => {
+  const [chargesInput, monthlyUsageInput, annualUsageInput, rateChangeInput, minimalRateInput] = screen.getAllByRole('spinbutton')
+
+  fireEvent.change(chargesInput, { target: { value: '120' } })
+  fireEvent.change(monthlyUsageInput, { target: { value: '600' } })
+  fireEvent.change(annualUsageInput, { target: { value: '7200' } })
+  fireEvent.change(rateChangeInput, { target: { value: rateChange } })
+  fireEvent.change(minimalRateInput, { target: { value: '3' } })
+}
+
+const submitForm = () => {
+  const button = screen.getByRole('button', { name: /calculate rate/i })
+  fireEvent.click(button)
+}
+
+const expectProjectedBillToBe = async (value) => {
+  await waitFor(() => {
+    expect(screen.getByText(/the monthly bill with change is/i)).toHaveTextContent(`$ ${value}`)
+  })
+}
+
+test('calculates projected monthly bill with a 10% increase', async () => {
+  render(<Calculator />)
+
+  fillRequiredFields('10')
+  submitForm()
+
+  await expectProjectedBillToBe('132.00')
+})
+
+test('calculates projected monthly bill with no percentage change', async () => {
+  render(<Calculator />)
+
+  fillRequiredFields('0')
+  submitForm()
+
+  await expectProjectedBillToBe('120.00')
+})
+
+test('calculates projected monthly bill with a 5% decrease', async () => {
+  render(<Calculator />)
+
+  fillRequiredFields('-5')
+  submitForm()
+
+  await expectProjectedBillToBe('114.00')
+})
