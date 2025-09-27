@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-//import { LineChart } from '@mui/x-charts/LineChart'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
 import SolarPowerTwoToneIcon from '@mui/icons-material/SolarPowerTwoTone'
@@ -10,41 +9,65 @@ import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
 import PowerOutlinedIcon from '@mui/icons-material/PowerOutlined'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
-import Modal from '@mui/material/Modal'
 import PercentIcon from '@mui/icons-material/Percent'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
 
-const style = {
+const listStyles = {
   py: 0,
   width: '100%',
-  borderRadius: 2,
-  border: '1px solid',
-  borderColor: 'divider',
-  backgroundColor: 'background.paper',
-  marginBottom: '20px',
-  maxWidth: '600px'
+  borderRadius: 3,
+  border: '1px solid rgba(148, 163, 184, 0.35)',
+  backgroundColor: 'rgba(255,255,255,0.85)',
+  boxShadow: '0 18px 45px rgba(15, 23, 42, 0.12)',
+  backdropFilter: 'blur(14px)'
 }
 
-const textBoxStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+const listWrapperStyles = {
+  width: '100%'
 }
-// const modalStyle = {
-//   position: 'absolute',
-//   top: '50%',
-//   left: '50%',
-//   transform: 'translate(-50%, -50%)',
-//   width: 400,
-//   backgroundColor: 'background.paper',
-//   border: '2px solid #000',
-//   boxShadow: 24,
-//   p: 4
-// }
+const currencyFormatter = (value) => {
+  if (value === 0) {
+    return '$0'
+  }
+
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+const ChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload || payload.length === 0) {
+    return null
+  }
+
+  const sunrun = payload.find((item) => item.dataKey === 'SunRun')
+  const sce = payload.find((item) => item.dataKey === 'SCE')
+  const savings = payload.find((item) => item.dataKey === 'Savings')
+
+  return (
+    <div className="chart-tooltip">
+      <p className="chart-tooltip__label">{label}</p>
+      {sunrun && (
+        <div className="chart-tooltip__item" style={{ '--color': sunrun.color }}>
+          <span>Sunrun</span>
+          <strong>${sunrun.value.toFixed(2)}</strong>
+        </div>
+      )}
+      {sce && (
+        <div className="chart-tooltip__item" style={{ '--color': sce.color }}>
+          <span>SCE</span>
+          <strong>${sce.value.toFixed(2)}</strong>
+        </div>
+      )}
+      {savings?.value != null && (
+        <div className="chart-tooltip__savings">
+          <span>Yearly savings</span>
+          <strong>${(savings.value * 12).toFixed(2)}</strong>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const Calculator = () => {
   const [charges, setCharges] = useState('')
@@ -57,6 +80,13 @@ const Calculator = () => {
   const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true
+    }
+
+    return window.innerWidth >= 768
+  })
   // const [open, setOpen] = useState(false)
   
   // const handleOpen = () => setOpen(true)
@@ -126,12 +156,26 @@ const Calculator = () => {
       calculateAnnualUsage() // Only calculate annual usage if conditions are met
     }
   }, [rate, annualUsage]); // Remove calculateAnnualUsage and avgPerMonthCost from the dependencies
-  
+
   useEffect(() => {
     if (avgPerMonthCost) {
       generateProjectedBills(parseFloat(avgPerMonthCost), parseFloat(sunRunAnnualRateIncrease)); // Now, handle projected bills based on avgPerMonthCost in a separate effect
     }
   }, [avgPerMonthCost]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -155,125 +199,158 @@ const Calculator = () => {
     setScePecentage('')
     setSunRunAnnualRateIncrease('0.00')
     setRate(null)
-    setProjectedFutureRateIncrease(null)
+    setProjectedFutureRateIncrease('0.00')
     setAvgPerMonthCost(null)
+    setProjectedMonthlyBill(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
   }
 
+  const chartData = xYearsLabel
+    .map((year, index) => {
+      const sunrunBill = projectedBills.sunrunBills[index]
+      const sceBill = projectedBills.sceBills[index]
+
+      if (!sunrunBill || !sceBill) {
+        return null
+      }
+
+      const sunrunValue = parseFloat(sunrunBill)
+      const sceValue = parseFloat(sceBill)
+
+      return {
+        year,
+        SunRun: sunrunValue,
+        SCE: sceValue,
+        Savings: Math.max(sceValue - sunrunValue, 0)
+      }
+    })
+    .filter(Boolean)
+
   return (
-<div className="calculator-container">
-  <div className="calculator-header">
-    <h2>SCE Rate Calculator</h2>
-    {/* <Button onClick={handleOpen} color="error" variant="text">Important Notice</Button>
-    <Modal open={open} onClose={handleClose}>
-      <Box sx={modalStyle}>
-        <Typography variant="h6">IMPORTANT NOTICE!</Typography>
-        <Typography sx={{ mt: 2 }}>
-          The rate increase for SCE is based on a 10.10% increase year over year for a period of ten years. 
-          Sunrun is set at 3.5% year over year. The SCE rates may not be accurate.
-        </Typography>
-      </Box>
-    </Modal> */}
-  </div>
+    <section className="calculator-container">
+      <div className="calculator-header">
+        <span className="calculator-badge">Energy insights</span>
+        <h1>Visualize your SCE costs with clarity</h1>
+        <p>Enter your recent charges and usage to calculate today&rsquo;s rate, then explore how future increases compare with a predictable Sunrun plan.</p>
+      </div>
 
-  <form className="calculator-form" onSubmit={handleSubmit}>
-    <div className="form-group">
-      <label><AttachMoneyIcon /> Monthly Charges</label>
-      <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} required />
-    </div>
-    
-    <div className="form-group">
-      <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
-      <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} required />
-    </div>
-    
-    <div className="form-group">
-      <label><BoltTwoToneIcon /> Annual kWh Usage</label>
-      <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} required />
-    </div>
-
-    <div className="form-group">
-      <label><PercentIcon /> Rate Change Percentage (increase or decrease):</label>
-      <input type="number" value={scePecentage} onChange={(e) => setScePecentage(e.target.value)} required />
-    </div>
-
-    <div className="form-group">
-      <label><PercentIcon /> Minimal Rate Percentage:</label>
-      <input type="number" value={projectedFutureRateIncrease} onChange={(e) => setProjectedFutureRateIncrease(e.target.value)} required />
-    </div>
-
-    <div className="button-group">
-      <button type="submit">Calculate Rate</button>
-      <button className="reset" type="button" onClick={handleReset}>Reset</button>
-    </div>
-
-  </form>
-
-  {rate !== null && (
-    <div className="sunrun-input-container">
-      <p className="warning-label">Please enter SunRun Monthly charge:</p>
-      <label><SolarPowerTwoToneIcon /> SunRun's Monthly Cost:</label>
-      <input type="number" step="0.01" value={sunRunAnnualRateIncrease} onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} />
-      <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost}>Calculate</button>
-    </div>
-  )}
-
-  <div className="result-container">
-    {rate !== null && (
-      <>
-        <Box sx={textBoxStyle}>
-          <List sx={style}>
-            <ListItem>
-              <ListItemText primary={`The rate is ${rate} per kWh.`} />
-              <Typography variant="p" gutterBottom>($ {charges} / {usage})</Typography>
-            </ListItem>
-            <Divider component="li" />
-            <ListItem>
-              <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} />
-              <Typography variant="p" gutterBottom>({annualUsage} X $ {rate} / 12)</Typography>
-            </ListItem>
-            <Divider component="li" />
-            <ListItem>
-              <ListItemText primary={`The monthly bill with change is $ ${projectedMonthlyBill}`}/>
-              <Typography variant="p" gutterBottom>({avgPerMonthCost} × (1 + {scePecentage} / 100))</Typography>
-            </ListItem>
-            <Divider component="li" />
-            {/* <ListItem><ListItemText primary="Projected Monthly Electric Bills (Next 10 Years)" /></ListItem>
-            <Divider component="li" />
-            <ListItem><ListItemText primary="This graph demonstrates Sunrun's rate increase vs SCE rate increase over the years." /></ListItem> */}
-          </List> 
-        </Box>
-        <Typography variant="h5" gutterBottom>Projected monthly bill (10 years)</Typography>
-        <Typography variant="h6" gutterBottom>Sunrun's rate vs SCE rates.</Typography>
-
-        <div className="mobile-graph-layout">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={projectedBills.sunrunBills.map((bill, index) => ({
-              year: xYearsLabel[index], 
-              SunRun: bill,             
-              SCE: projectedBills.sceBills[index]
-            }))}>
-              <CartesianGrid strokeDasharray="3 3" />
-              {/* Adjust the XAxis to rotate labels for better readability */}
-              <XAxis 
-                dataKey="year" 
-                tick={{ fontSize: 12 }} 
-                angle={-45}  // Rotate the labels for better fit
-                textAnchor="end" // Align text to end (makes the rotated text readable)
-              />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              {/* Remove Legend on mobile to save space */}
-              {window.innerWidth > 600 && <Legend />}  {/* Show legend only on larger screens */}
-              <Line type="monotone" dataKey="SunRun" stroke="#007bff" />
-              <Line type="monotone" dataKey="SCE" stroke="#FF6A00" />
-            </LineChart>
-          </ResponsiveContainer>
+      <div className="calculator-grid">
+        <form className="calculator-form surface-card" onSubmit={handleSubmit}>
+          <div className="form-header">
+            <h3>Usage details</h3>
+            <p>We&rsquo;ll use these figures to determine your current kWh rate.</p>
           </div>
-      </>
-    )}
-    </div>
-  </div>
+
+          <div className="form-group">
+            <label><AttachMoneyIcon /> Monthly Charges</label>
+            <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} placeholder="e.g. 225.60" required />
+          </div>
+
+          <div className="form-group">
+            <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
+            <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} placeholder="e.g. 540" required />
+          </div>
+
+          <div className="form-group">
+            <label><BoltTwoToneIcon /> Annual kWh Usage</label>
+            <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} placeholder="e.g. 6480" required />
+          </div>
+
+          <div className="form-group">
+            <label><PercentIcon /> Rate change percentage</label>
+            <input type="number" value={scePecentage} onChange={(e) => setScePecentage(e.target.value)} placeholder="Projected annual increase" required />
+          </div>
+
+          <div className="form-group">
+            <label><PercentIcon /> Minimal rate percentage</label>
+            <input type="number" value={projectedFutureRateIncrease} onChange={(e) => setProjectedFutureRateIncrease(e.target.value)} placeholder="Baseline annual increase" required />
+          </div>
+
+          <div className="button-group">
+            <button type="submit">Calculate rate</button>
+            <button className="reset" type="button" onClick={handleReset}>Reset</button>
+          </div>
+        </form>
+
+        <div className="result-panel surface-card">
+          <div className="result-header">
+            <h3>Bill snapshot</h3>
+            <p>See how your current rate compares with upcoming adjustments.</p>
+          </div>
+
+          {rate !== null ? (
+            <>
+              <Box sx={listWrapperStyles}>
+                <List sx={listStyles}>
+                  <ListItem className="result-item">
+                    <ListItemText primary={`The rate is ${rate} per kWh.`} secondary={`($ ${charges || 0} / ${usage || 0})`} />
+                  </ListItem>
+                  <Divider component="li" />
+                  <ListItem className="result-item">
+                    <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} secondary={`(${annualUsage || 0} × $ ${rate} / 12)`} />
+                  </ListItem>
+                  <Divider component="li" />
+                  <ListItem className="result-item">
+                    <ListItemText primary={`The monthly bill with change is $ ${projectedMonthlyBill}`} secondary={`(${avgPerMonthCost} × (1 + ${scePecentage || 0} / 100))`} />
+                  </ListItem>
+                </List>
+              </Box>
+
+              <div className="sunrun-input-container">
+                <p className="warning-label">Compare against a Sunrun plan</p>
+                <div className="sunrun-input-row">
+                  <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
+                  <input id="sunrun-rate" type="number" step="0.01" value={sunRunAnnualRateIncrease} onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} placeholder="e.g. 185.00" />
+                </div>
+                <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
+              </div>
+            </>
+          ) : (
+            <div className="empty-state">
+              <h4>Ready when you are</h4>
+              <p>Provide your charges and usage to unlock projections tailored to your household.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {rate !== null && chartData.length > 0 && (
+        <div className="chart-card surface-card">
+          <div className="chart-header">
+            <h3>Projected monthly bills (next 10 years)</h3>
+            <p>Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady 3.5% escalation.</p>
+          </div>
+
+          <div className="chart-wrapper">
+            <ResponsiveContainer width="100%" height={420}>
+              <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                <defs>
+                  <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" stroke="#cbd5f5" vertical={false} />
+                <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#334155' }} angle={-30} textAnchor="end" interval={0} height={70} />
+                <YAxis tickFormatter={currencyFormatter} tick={{ fontSize: 12, fill: '#334155' }} width={90} />
+                <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#94a3b8' }} />
+                {isDesktop && (
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    wrapperStyle={{ paddingBottom: 20 }}
+                    iconType="circle"
+                  />
+                )}
+                <Area type="monotone" dataKey="Savings" stroke="none" fill="url(#savingsGradient)" fillOpacity={1} legendType="none" />
+                <Line type="monotone" dataKey="SunRun" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="SCE" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 
