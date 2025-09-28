@@ -120,6 +120,7 @@ const Calculator = () => {
   const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
+  const [sunrunProjectionMessage, setSunrunProjectionMessage] = useState('')
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') {
       return true
@@ -193,6 +194,7 @@ const Calculator = () => {
     }
 
     generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
+    setSunrunProjectionMessage('')
   }, [avgPerMonthCost, sunRunMonthlyCost, generateProjectedBills])
 
   useEffect(() => {
@@ -220,8 +222,9 @@ const Calculator = () => {
     if (rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0) {
       // Trigger the projected bills calculation with the SunRun start rate
       generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
+      setSunrunProjectionMessage('')
     } else {
-      console.error("Rate or SunRun Start Monthly Cost is not set properly.")
+      setSunrunProjectionMessage('Calculate your rate and provide a Sunrun monthly cost to update the projection.')
     }
   }
 
@@ -236,6 +239,7 @@ const Calculator = () => {
     setAvgPerMonthCost(null)
     setProjectedMonthlyBill(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
+    setSunrunProjectionMessage('')
   }
 
   const chartData = useMemo(() => xYearsLabel
@@ -892,6 +896,9 @@ const Calculator = () => {
                   <input id="sunrun-rate" type="number" step="0.01" value={sunRunMonthlyCost} onChange={(e) => setSunRunMonthlyCost(e.target.value)} placeholder="e.g. 185.00" />
                 </div>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
+                {sunrunProjectionMessage && (
+                  <p className="sunrun-helper-message" role="alert">{sunrunProjectionMessage}</p>
+                )}
               </div>
 
               <div className="insight-highlights">
