@@ -10,6 +10,8 @@ body {
   position: relative;
   overflow-x: hidden;
   background-attachment: fixed;
+  background-size: 200% 200%;
+  animation: gradientShift 22s ease infinite alternate;
 }
 
 body::before,
@@ -23,6 +25,7 @@ body::after {
   filter: blur(10px);
   z-index: -1;
   transform: translate(-20%, 30%);
+  animation: floatBlob 24s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -30,6 +33,7 @@ body::after {
   inset: 0 0 auto auto;
   background: radial-gradient(circle at center, rgba(236, 72, 153, 0.22) 0%, rgba(244, 114, 182, 0.08) 65%, transparent 75%);
   transform: translate(20%, -35%);
+  animation: floatBlobAlt 28s ease-in-out infinite reverse;
 }
 
 .app-shell {
@@ -40,6 +44,7 @@ body::after {
   padding: clamp(32px, 6vw, 72px) clamp(16px, 5vw, 64px);
   position: relative;
   isolation: isolate;
+  animation: fadeInShell 1s ease forwards;
 }
 
 .app-shell::before {
@@ -62,4 +67,74 @@ body::after {
   z-index: -2;
   mask: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent 80%);
   -webkit-mask: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent 80%);
+  animation: shimmerMask 18s linear infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes floatBlob {
+  0%,
+  100% {
+    transform: translate(-20%, 30%) scale(1);
+  }
+  50% {
+    transform: translate(-18%, 36%) scale(1.05);
+  }
+}
+
+@keyframes floatBlobAlt {
+  0%,
+  100% {
+    transform: translate(20%, -35%) scale(1);
+  }
+  50% {
+    transform: translate(24%, -28%) scale(1.05);
+  }
+}
+
+@keyframes fadeInShell {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmerMask {
+  0% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background-position: 50% 50%;
+  }
+
+  body::before,
+  body::after,
+  .app-shell,
+  .app-shell::after {
+    animation: none !important;
+  }
 }
