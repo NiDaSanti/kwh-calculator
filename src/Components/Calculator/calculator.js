@@ -226,12 +226,37 @@ const Calculator = () => {
     })
     .filter(Boolean)
 
+  const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
+  const sunrunMonthlyCostNumber = sunRunAnnualRateIncrease ? parseFloat(sunRunAnnualRateIncrease) : null
+  const monthlySavings = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
+    ? projectedMonthlyBillNumber - sunrunMonthlyCostNumber
+    : null
+  const firstYearSavings = chartData.length > 0 ? chartData[0].Savings * 12 : null
+  const tenYearSavings = chartData.length > 0 ? chartData[chartData.length - 1].Savings * 12 : null
+  const monthlyDifferenceDisplay = monthlySavings !== null ? Math.abs(monthlySavings) : null
+  const monthlyDifferenceLabel = monthlySavings !== null && monthlySavings < 0 ? 'added cost' : 'saved'
+  const hasFirstYearSavings = firstYearSavings !== null && firstYearSavings > 0
+  const hasTenYearSavings = tenYearSavings !== null && tenYearSavings > 0
+
+  const formatCurrency = (value, options = {}) => {
+    if (value === null || Number.isNaN(value)) {
+      return '--'
+    }
+
+    return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0, ...options })
+  }
+
   return (
     <section className="calculator-container">
       <div className="calculator-header">
         <span className="calculator-badge">Energy insights</span>
-        <h1>Visualize your SCE costs with clarity</h1>
+        <h1><span>Visualize</span> your SCE costs with clarity</h1>
         <p>Enter your recent charges and usage to calculate today&rsquo;s rate, then explore how future increases compare with a predictable Sunrun plan.</p>
+        <div className="header-pills">
+          <span>10-year projection</span>
+          <span>Side-by-side comparison</span>
+          <span>Custom Sunrun plan</span>
+        </div>
       </div>
 
       <div className="calculator-grid">
@@ -303,6 +328,44 @@ const Calculator = () => {
                   <input id="sunrun-rate" type="number" step="0.01" value={sunRunAnnualRateIncrease} onChange={(e) => setSunRunAnnualRateIncrease(e.target.value)} placeholder="e.g. 185.00" />
                 </div>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
+              </div>
+
+              <div className="insight-highlights">
+                <article className="insight-card accent-blue">
+                  <span className="insight-label">Current rate</span>
+                  <span className="insight-metric">${rate} <span className="insight-unit">/ kWh</span></span>
+                  <p className="insight-caption">Reflects today&rsquo;s billing with a {scePecentage || 0}% annual increase assumption.</p>
+                </article>
+
+                <article className="insight-card accent-emerald">
+                  <span className="insight-label">Monthly difference</span>
+                  <span className="insight-metric">
+                    {monthlyDifferenceDisplay !== null ? `$${formatCurrency(monthlyDifferenceDisplay, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                    {monthlyDifferenceDisplay !== null && <span className="insight-unit"> {monthlyDifferenceLabel}</span>}
+                  </span>
+                  <p className="insight-caption">
+                    {hasFirstYearSavings
+                      ? `Keep roughly $${formatCurrency(firstYearSavings)} more in year one when compared with Sunrun.`
+                      : monthlySavings !== null && monthlySavings < 0
+                        ? 'Sunrun currently adds to your monthly costs—lower the starting rate to see savings.'
+                        : 'Enter a Sunrun monthly cost to explore first-year savings.'}
+                  </p>
+                </article>
+
+                <article className="insight-card accent-amber">
+                  <span className="insight-label">Long-term outlook</span>
+                  <span className="insight-metric">
+                    {tenYearSavings !== null ? `$${formatCurrency(tenYearSavings)}` : '--'}
+                    {tenYearSavings !== null && <span className="insight-unit"> / yr</span>}
+                  </span>
+                  <p className="insight-caption">
+                    {hasTenYearSavings
+                      ? `Projected annual savings by ${chartData.length > 0 ? chartData[chartData.length - 1].year : '2035'} assuming current trends continue.`
+                      : monthlySavings !== null && monthlySavings < 0
+                        ? 'Sunrun remains above SCE over the next decade at this rate.'
+                        : 'Add a Sunrun monthly cost to unlock decade-long comparisons.'}
+                  </p>
+                </article>
               </div>
             </>
           ) : (

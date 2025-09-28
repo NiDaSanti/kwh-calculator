@@ -17,6 +17,8 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   color: #0f172a;
+  padding: clamp(12px, 3vw, 24px);
+  position: relative;
 }
 
 .calculator-header {
@@ -24,6 +26,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: center;
 }
 
 .calculator-badge {
@@ -36,12 +39,24 @@ body {
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.15);
+  backdrop-filter: blur(6px);
 }
 
 .calculator-header h1 {
   font-size: clamp(2rem, 2.8vw, 2.75rem);
   font-weight: 700;
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.calculator-header h1 span {
+  background: linear-gradient(135deg, #2563eb, #9333ea);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .calculator-header p {
@@ -50,6 +65,23 @@ body {
   color: #475569;
   font-size: 1rem;
   line-height: 1.6;
+}
+
+.header-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.header-pills span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  color: #1e293b;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
 }
 
 .calculator-grid {
@@ -65,6 +97,21 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.25);
   box-shadow: 0 25px 55px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.surface-card::before {
+  content: '';
+  position: absolute;
+  inset: -40% -35% auto auto;
+  height: 220px;
+  width: 220px;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.18), transparent 65%);
+  opacity: 0.6;
+  z-index: -1;
+  transform: rotate(12deg);
 }
 
 .form-header {
@@ -159,6 +206,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
 }
 
 .result-header h3 {
@@ -189,8 +237,9 @@ button {
   gap: 16px;
   padding: 18px 20px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(199, 210, 254, 0.35), rgba(191, 219, 254, 0.35));
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, rgba(199, 210, 254, 0.45), rgba(191, 219, 254, 0.25));
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .sunrun-input-row {
@@ -214,6 +263,7 @@ button {
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(255, 255, 255, 0.9);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sunrun-input-row input:focus {
@@ -240,12 +290,105 @@ button {
   color: #166534;
 }
 
+.insight-highlights {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-top: 12px;
+}
+
+.insight-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(248, 250, 252, 0.85);
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: float-card 8s ease-in-out infinite;
+}
+
+.insight-card:nth-child(2) {
+  animation-delay: 1.3s;
+}
+
+.insight-card:nth-child(3) {
+  animation-delay: 2.1s;
+}
+
+.insight-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(30, 41, 59, 0.72);
+}
+
+.insight-metric {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.insight-unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.insight-caption {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.accent-blue {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.55), rgba(219, 234, 254, 0.35));
+}
+
+.accent-emerald {
+  border-color: rgba(134, 239, 172, 0.5);
+  background: linear-gradient(135deg, rgba(187, 247, 208, 0.55), rgba(220, 252, 231, 0.35));
+}
+
+.accent-amber {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.6), rgba(254, 249, 195, 0.35));
+}
+
 .empty-state {
   padding: 26px;
   border-radius: 18px;
   background: rgba(248, 250, 252, 0.75);
   border: 1px dashed rgba(148, 163, 184, 0.35);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: '';
+  position: absolute;
+  inset: -20% auto auto -20%;
+  height: 140px;
+  width: 140px;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2), transparent 65%);
+  opacity: 0.5;
+}
+
+.empty-state::after {
+  content: '';
+  position: absolute;
+  inset: auto -25% -25% auto;
+  height: 160px;
+  width: 160px;
+  background: radial-gradient(circle at center, rgba(236, 72, 153, 0.18), transparent 65%);
+  opacity: 0.5;
 }
 
 .empty-state h4 {
@@ -263,6 +406,28 @@ button {
   flex-direction: column;
   gap: 20px;
   background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 55%);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  inset: auto -30% -45% auto;
+  height: 260px;
+  width: 260px;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), transparent 70%);
+  opacity: 0.5;
+}
+
+.chart-card::after {
+  content: '';
+  position: absolute;
+  inset: -35% auto auto -30%;
+  height: 220px;
+  width: 220px;
+  background: radial-gradient(circle at center, rgba(251, 191, 36, 0.18), transparent 70%);
+  opacity: 0.45;
 }
 
 .chart-header h3 {
@@ -279,6 +444,8 @@ button {
   width: 100%;
   height: 100%;
   padding: 8px 0 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .chart-tooltip {
@@ -352,6 +519,16 @@ button {
   letter-spacing: 0.01em;
 }
 
+@keyframes float-card {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 @media (max-width: 768px) {
   .calculator-container {
     padding: 0 4px;
@@ -360,6 +537,14 @@ button {
   .surface-card {
     border-radius: 20px;
     padding: 22px;
+  }
+
+  .header-pills {
+    gap: 8px;
+  }
+
+  .insight-highlights {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   .button-group {
