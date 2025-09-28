@@ -668,6 +668,47 @@ button:hover::after {
   color: #166534;
 }
 
+.projection-length-control {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(236, 253, 245, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.projection-length-control label {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #166534;
+}
+
+.projection-length-control input[type='range'] {
+  width: 100%;
+  accent-color: #22c55e;
+  cursor: pointer;
+}
+
+.projection-length-control__values {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.projection-length-control__caption {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #047857;
+}
+
 .projection-actions {
   display: flex;
   flex-direction: column;
