@@ -115,9 +115,9 @@ const currencyFormatter = (value) => {
 }
 
 const tooltipAccentColors = {
-  SunRun: '#60a5fa',
+  SunRun: '#6366f1',
   SCE: '#f472b6',
-  Savings: '#818cf8'
+  Savings: '#a855f7'
 }
 
 const ChartTooltip = ({ active, payload, label }) => {
@@ -1563,18 +1563,19 @@ const Calculator = () => {
                 <defs>
                   <linearGradient id="sunrunLineGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="48%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#a855f7" />
+                    <stop offset="45%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
                   </linearGradient>
                   <linearGradient id="sceLineGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#f472b6" />
-                    <stop offset="52%" stopColor="#c084fc" />
+                    <stop offset="48%" stopColor="#d946ef" />
                     <stop offset="100%" stopColor="#7c3aed" />
                   </linearGradient>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.38} />
-                    <stop offset="46%" stopColor="#818cf8" stopOpacity={0.22} />
-                    <stop offset="100%" stopColor="#a855f7" stopOpacity={0.08} />
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.42} />
+                    <stop offset="35%" stopColor="#6366f1" stopOpacity={0.28} />
+                    <stop offset="70%" stopColor="#8b5cf6" stopOpacity={0.18} />
+                    <stop offset="100%" stopColor="#c084fc" stopOpacity={0.08} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="4 4" stroke="#cbd5f5" vertical={false} />
@@ -1608,16 +1609,16 @@ const Calculator = () => {
                   dataKey="SunRun"
                   stroke="url(#sunrunLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 5.5, strokeWidth: 2, stroke: '#c7d2fe', fill: '#4338ca' }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: '#4338ca' }}
+                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#c7d2fe', fill: '#312e81' }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: '#4338ca' }}
                 />
                 <Line
                   type="monotone"
                   dataKey="SCE"
                   stroke="url(#sceLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 5.5, strokeWidth: 2, stroke: '#fbcfe8', fill: '#be185d' }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: '#be185d' }}
+                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#fbcfe8', fill: '#6d28d9' }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: '#7c3aed' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
