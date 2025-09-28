@@ -162,6 +162,7 @@ const Calculator = () => {
   })
   const [copyStatus, setCopyStatus] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  const [sunrunProjectionStatus, setSunrunProjectionStatus] = useState(null)
 
   const setFieldError = useCallback((name, message) => {
     setFieldErrors((prev) => {
@@ -338,14 +339,25 @@ const Calculator = () => {
     })
 
     if (!isValid) {
+      setSunrunProjectionStatus({
+        type: 'error',
+        message: 'Enter a valid Sunrun monthly cost before updating the projection.'
+      })
       return
     }
 
     if (rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0) {
       // Trigger the projected bills calculation with the SunRun start rate
       generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
+      setSunrunProjectionStatus({
+        type: 'success',
+        message: 'Projection updated with your Sunrun monthly cost.'
+      })
     } else {
-      console.error("Rate or SunRun Start Monthly Cost is not set properly.")
+      setSunrunProjectionStatus({
+        type: 'error',
+        message: 'Calculate the projected utility bill first, then enter a Sunrun cost to compare.'
+      })
     }
   }
 
@@ -361,6 +373,7 @@ const Calculator = () => {
     setProjectedMonthlyBill(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
     setFieldErrors({})
+    setSunrunProjectionStatus(null)
   }
 
   const chartData = useMemo(() => xYearsLabel
@@ -1084,12 +1097,18 @@ const Calculator = () => {
                       const { value } = e.target
                       setSunRunMonthlyCost(value)
                       setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
+                      setSunrunProjectionStatus(null)
                     }}
                     placeholder="e.g. 185.00"
                   />
                 </div>
                 <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>{getHelperText('sunRunMonthlyCost')}</p>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
+                {sunrunProjectionStatus?.message && (
+                  <p className={`input-helper ${sunrunProjectionStatus.type === 'error' ? 'input-helper--error' : ''}`}>
+                    {sunrunProjectionStatus.message}
+                  </p>
+                )}
               </div>
 
               <div className="insight-highlights">
