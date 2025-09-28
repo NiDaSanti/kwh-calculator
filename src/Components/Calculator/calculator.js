@@ -68,8 +68,8 @@ const ChartTooltip = ({ active, payload, label }) => {
       )}
       {savings?.value != null && (
         <div className="chart-tooltip__savings">
-          <span>Yearly savings</span>
-          <strong>${(savings.value * 12).toFixed(2)}</strong>
+          <span>{savings.value >= 0 ? 'Yearly savings' : 'Yearly additional cost'}</span>
+          <strong>${Math.abs(savings.value * 12).toFixed(2)}</strong>
         </div>
       )}
     </div>
@@ -237,7 +237,7 @@ const Calculator = () => {
         year,
         SunRun: sunrunValue,
         SCE: sceValue,
-        Savings: Math.max(sceValue - sunrunValue, 0)
+        Savings: sceValue - sunrunValue
       }
     })
     .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills])
@@ -267,13 +267,15 @@ const Calculator = () => {
 
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
-  const monthlySavings = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
+  const monthlyDifference = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
     ? projectedMonthlyBillNumber - sunrunMonthlyCostNumber
     : null
-  const firstYearSavings = chartData.length > 0 ? chartData[0].Savings * 12 : null
-  const tenYearSavings = chartData.length > 0 ? chartData[chartData.length - 1].Savings * 12 : null
-  const fiveYearSavings = chartData.length > 0 ? chartData.slice(0, 5).reduce((acc, item) => acc + item.Savings * 12, 0) : null
-  const cumulativeTenYearSavings = chartData.length > 0 ? chartData.reduce((acc, item) => acc + item.Savings * 12, 0) : null
+  const firstYearDifference = chartData.length > 0 ? chartData[0].Savings * 12 : null
+  const tenYearDifference = chartData.length > 0 ? chartData[chartData.length - 1].Savings * 12 : null
+  const fiveYearDifference = chartData.length > 0 ? chartData.slice(0, 5).reduce((acc, item) => acc + item.Savings * 12, 0) : null
+  const cumulativeTenYearDifference = yearlyBreakdown.length > 0
+    ? yearlyBreakdown[yearlyBreakdown.length - 1].cumulativeSavings
+    : null
   const peakSavings = chartData.reduce((best, item) => {
     if (!best || item.Savings > best.Savings) {
       return { year: item.year, Savings: item.Savings }
@@ -281,12 +283,12 @@ const Calculator = () => {
 
     return best
   }, null)
-  const monthlyDifferenceDisplay = monthlySavings !== null ? Math.abs(monthlySavings) : null
-  const monthlyDifferenceLabel = monthlySavings !== null && monthlySavings < 0 ? 'added cost' : 'saved'
-  const hasFirstYearSavings = firstYearSavings !== null && firstYearSavings > 0
-  const hasTenYearSavings = tenYearSavings !== null && tenYearSavings > 0
-  const hasFiveYearSavings = fiveYearSavings !== null && fiveYearSavings > 0
-  const hasCumulativeTenYearSavings = cumulativeTenYearSavings !== null && cumulativeTenYearSavings > 0
+  const monthlyDifferenceDisplay = monthlyDifference !== null ? Math.abs(monthlyDifference) : null
+  const monthlyDifferenceLabel = monthlyDifference !== null && monthlyDifference < 0 ? 'added cost' : 'saved'
+  const hasFirstYearDifference = firstYearDifference !== null && firstYearDifference !== 0
+  const hasTenYearDifference = tenYearDifference !== null && tenYearDifference !== 0
+  const hasFiveYearDifference = fiveYearDifference !== null && fiveYearDifference !== 0
+  const hasCumulativeTenYearDifference = cumulativeTenYearDifference !== null && cumulativeTenYearDifference !== 0
   const hasPeakSavings = peakSavings !== null && peakSavings.Savings > 0
   const hasYearlyBreakdown = yearlyBreakdown.length > 0
   const totalSunrunSpend = yearlyBreakdown.reduce((acc, item) => acc + item.sunrunAnnual, 0)
@@ -322,6 +324,14 @@ const Calculator = () => {
     }
 
     return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0, ...options })
+  }
+
+  const formatCurrencyAbsolute = (value, options = {}) => {
+    if (value === null || Number.isNaN(value)) {
+      return '--'
+    }
+
+    return formatCurrency(Math.abs(value), options)
   }
 
   const animationTriggerKey = useMemo(() => [
@@ -578,24 +588,30 @@ const Calculator = () => {
                     {monthlyDifferenceDisplay !== null && <span className="insight-unit"> {monthlyDifferenceLabel}</span>}
                   </span>
                   <p className="insight-caption">
-                    {hasFirstYearSavings
-                      ? `Keep roughly $${formatCurrency(firstYearSavings)} more in year one when compared with Sunrun’s ${SUNRUN_ESCALATION.toFixed(1)}% escalation.`
-                      : monthlySavings !== null && monthlySavings < 0
+                    {hasFirstYearDifference
+                      ? firstYearDifference > 0
+                        ? `Keep roughly $${formatCurrencyAbsolute(firstYearDifference)} more in year one when compared with Sunrun’s ${SUNRUN_ESCALATION.toFixed(1)}% escalation.`
+                        : `Expect roughly $${formatCurrencyAbsolute(firstYearDifference)} in additional Sunrun costs during year one at the current rate.`
+                      : monthlyDifference !== null && monthlyDifference < 0
                         ? 'Sunrun currently adds to your monthly costs—lower the starting rate to see savings.'
-                        : 'Enter a Sunrun monthly cost to explore first-year savings.'}
+                        : 'Enter a Sunrun monthly cost to explore first-year differences.'}
                   </p>
                 </article>
 
                 <article className="insight-card accent-amber animatable" data-animate style={{ '--delay': '0.34s' }}>
                   <span className="insight-label">Long-term outlook</span>
                   <span className="insight-metric">
-                    {tenYearSavings !== null ? `$${formatCurrency(tenYearSavings)}` : '--'}
-                    {tenYearSavings !== null && <span className="insight-unit"> / yr</span>}
+                    {tenYearDifference !== null ? `$${formatCurrencyAbsolute(tenYearDifference)}` : '--'}
+                    {tenYearDifference !== null && (
+                      <span className="insight-unit"> {tenYearDifference >= 0 ? '/ yr saved' : '/ yr added cost'}</span>
+                    )}
                   </span>
                   <p className="insight-caption">
-                    {hasTenYearSavings
-                      ? `Projected annual savings by ${chartData.length > 0 ? chartData[chartData.length - 1].year : '2035'} using your utility increase inputs.`
-                      : monthlySavings !== null && monthlySavings < 0
+                    {hasTenYearDifference
+                      ? tenYearDifference > 0
+                        ? `Projected annual savings by ${chartData.length > 0 ? chartData[chartData.length - 1].year : '2035'} using your utility increase inputs.`
+                        : `Projected annual additional cost by ${chartData.length > 0 ? chartData[chartData.length - 1].year : '2035'} using your utility increase inputs.`
+                      : monthlyDifference !== null && monthlyDifference < 0
                         ? 'Sunrun remains above SCE over the next decade at this rate.'
                         : 'Add a Sunrun monthly cost to unlock decade-long comparisons.'}
                   </p>
@@ -603,13 +619,17 @@ const Calculator = () => {
                 <article className="insight-card accent-violet animatable" data-animate style={{ '--delay': '0.4s' }}>
                   <span className="insight-label">Five-year cushion</span>
                   <span className="insight-metric">
-                    {hasFiveYearSavings ? `$${formatCurrency(fiveYearSavings)}` : '--'}
-                    {hasFiveYearSavings && <span className="insight-unit"> cumulative</span>}
+                    {hasFiveYearDifference ? `$${formatCurrencyAbsolute(fiveYearDifference)}` : '--'}
+                    {hasFiveYearDifference && (
+                      <span className="insight-unit"> {fiveYearDifference >= 0 ? 'cumulative saved' : 'cumulative added cost'}</span>
+                    )}
                   </span>
                   <p className="insight-caption">
-                    {hasFiveYearSavings
-                      ? `Keep roughly $${formatCurrency(fiveYearSavings, { minimumFractionDigits: 0 })} in your pocket during the first five years.`
-                      : 'If this value reads zero, lower the Sunrun starting cost or adjust rate increases to uncover savings.'}
+                    {hasFiveYearDifference
+                      ? fiveYearDifference > 0
+                        ? `Keep roughly $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} in your pocket during the first five years.`
+                        : `Plan for about $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} in added costs over the first five years.`
+                      : 'If this value reads zero, adjust the Sunrun starting cost or rate increases to uncover savings or pinpoint added costs.'}
                   </p>
                 </article>
                 <article className="insight-card accent-slate animatable" data-animate style={{ '--delay': '0.46s' }}>
@@ -672,7 +692,7 @@ const Calculator = () => {
                 </p>
               </div>
 
-              {(hasCumulativeTenYearSavings || hasPeakSavings) && (
+              {(hasCumulativeTenYearDifference || hasPeakSavings) && (
                 <div className="savings-summary animatable" data-animate style={{ '--delay': '0.32s' }}>
                   <div className="savings-summary__header">
                     <span className="savings-summary__badge"><TrendingUpIcon /> Savings storyline</span>
@@ -687,13 +707,17 @@ const Calculator = () => {
                       <div>
                         <p className="metric-chip__label">Ten-year cumulative</p>
                         <p className="metric-chip__value">
-                          {hasCumulativeTenYearSavings ? `$${formatCurrency(cumulativeTenYearSavings)}` : '--'}
-                          {hasCumulativeTenYearSavings && <span> saved</span>}
+                          {hasCumulativeTenYearDifference ? `$${formatCurrencyAbsolute(cumulativeTenYearDifference)}` : '--'}
+                          {hasCumulativeTenYearDifference && (
+                            <span> {cumulativeTenYearDifference > 0 ? 'saved' : 'added cost'}</span>
+                          )}
                         </p>
                         <p className="metric-chip__caption">
-                          {hasCumulativeTenYearSavings
-                            ? 'Total savings when comparing month-to-month bills over the coming decade.'
-                            : 'Adjust assumptions until Sunrun pulls ahead to reveal decade-long savings.'}
+                          {hasCumulativeTenYearDifference
+                            ? cumulativeTenYearDifference > 0
+                              ? 'Total savings when comparing month-to-month bills over the coming decade.'
+                              : 'Sunrun adds to your projected costs compared with SCE over the coming decade.'
+                            : 'Adjust assumptions until Sunrun pulls ahead to reveal decade-long differences.'}
                         </p>
                       </div>
                     </div>
