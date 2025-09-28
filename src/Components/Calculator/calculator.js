@@ -216,16 +216,50 @@ const Calculator = () => {
     calculateRate()
   }
 
-  const handleSunRunMonthlyCost = (e) => {
-    const parsedSunrun = parseFloat(sunRunMonthlyCost)
+  const sunrunUpdateGuardrail = useCallback(() => {
+    const hasCalculatedRate = rate !== null && rate !== ''
 
-    if (rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0) {
+    if (!hasCalculatedRate) {
+      return 'Enter your latest charges and usage, then calculate your kWh rate before updating the projection.'
+    }
+
+    const annualUsageNumber = parseFloat(annualUsage)
+    if (!Number.isFinite(annualUsageNumber) || annualUsageNumber <= 0) {
+      return 'Add an annual usage value above zero to build a projection to compare with Sunrun.'
+    }
+
+    const projectedIncrease = parseFloat(scePecentage)
+    if (Number.isNaN(projectedIncrease)) {
+      return 'Provide the projected SCE increase (%) so we can project your utility costs.'
+    }
+
+    const trimmedSunrunCost = sunRunMonthlyCost.trim()
+    if (trimmedSunrunCost === '') {
+      return 'Enter a Sunrun monthly cost to compare against your projected utility bill.'
+    }
+
+    const parsedSunrun = parseFloat(trimmedSunrunCost)
+    if (!Number.isFinite(parsedSunrun) || parsedSunrun <= 0) {
+      return 'Sunrun monthly cost must be a positive number to update the projection.'
+    }
+
+    return ''
+  }, [annualUsage, rate, scePecentage, sunRunMonthlyCost])
+
+  const handleSunRunMonthlyCost = () => {
+    const trimmedSunrunCost = sunRunMonthlyCost.trim()
+    const parsedSunrun = parseFloat(trimmedSunrunCost)
+    const readyForProjection = rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0
+
+    if (readyForProjection) {
       // Trigger the projected bills calculation with the SunRun start rate
       generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
       setSunrunProjectionMessage('')
-    } else {
-      setSunrunProjectionMessage('Calculate your rate and provide a Sunrun monthly cost to update the projection.')
+      return
     }
+
+    const helperMessage = sunrunUpdateGuardrail()
+    setSunrunProjectionMessage(helperMessage || 'Double-check the required inputs above to update the projection.')
   }
 
   const handleReset = () => {
@@ -897,7 +931,9 @@ const Calculator = () => {
                 </div>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
                 {sunrunProjectionMessage && (
-                  <p className="sunrun-helper-message" role="alert">{sunrunProjectionMessage}</p>
+                  <p className="sunrun-helper-message" role="alert" aria-live="polite" aria-atomic="true">
+                    {sunrunProjectionMessage}
+                  </p>
                 )}
               </div>
 
