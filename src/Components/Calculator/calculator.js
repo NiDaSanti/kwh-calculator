@@ -13,6 +13,9 @@ import PercentIcon from '@mui/icons-material/Percent'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import InsightsIcon from '@mui/icons-material/Insights'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
+import DownloadIcon from '@mui/icons-material/Download'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import TableChartIcon from '@mui/icons-material/TableChart'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034", "2035"]
@@ -91,6 +94,7 @@ const Calculator = () => {
 
     return window.innerWidth >= 768
   })
+  const [copyStatus, setCopyStatus] = useState('')
   // const [open, setOpen] = useState(false)
   
   // const handleOpen = () => setOpen(true)
@@ -238,6 +242,29 @@ const Calculator = () => {
     })
     .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills])
 
+  const yearlyBreakdown = useMemo(() => {
+    if (chartData.length === 0) {
+      return []
+    }
+
+    return chartData.reduce((acc, item) => {
+      const sunrunAnnual = item.SunRun * 12
+      const sceAnnual = item.SCE * 12
+      const diffAnnual = sceAnnual - sunrunAnnual
+      const cumulativeSavings = (acc[acc.length - 1]?.cumulativeSavings ?? 0) + diffAnnual
+
+      acc.push({
+        year: item.year,
+        sunrunAnnual,
+        sceAnnual,
+        diffAnnual,
+        cumulativeSavings
+      })
+
+      return acc
+    }, [])
+  }, [chartData])
+
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
   const monthlySavings = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
@@ -261,6 +288,17 @@ const Calculator = () => {
   const hasFiveYearSavings = fiveYearSavings !== null && fiveYearSavings > 0
   const hasCumulativeTenYearSavings = cumulativeTenYearSavings !== null && cumulativeTenYearSavings > 0
   const hasPeakSavings = peakSavings !== null && peakSavings.Savings > 0
+  const hasYearlyBreakdown = yearlyBreakdown.length > 0
+  const totalSunrunSpend = yearlyBreakdown.reduce((acc, item) => acc + item.sunrunAnnual, 0)
+  const totalSceSpend = yearlyBreakdown.reduce((acc, item) => acc + item.sceAnnual, 0)
+  const totalSavings = totalSceSpend - totalSunrunSpend
+  const hasPositiveTotalSavings = totalSavings > 0
+  const breakEvenYear = yearlyBreakdown.find((item) => item.cumulativeSavings > 0)?.year ?? null
+  const hasBreakEven = breakEvenYear !== null
+  const totalDifferenceLabel = hasYearlyBreakdown ? (hasPositiveTotalSavings ? 'saved total' : 'additional cost') : ''
+  const breakEvenDescription = hasBreakEven
+    ? `Savings overtake SCE in ${breakEvenYear} based on your current assumptions.`
+    : 'Sunrun never surpasses the projected SCE costs within this 10-year window.'
 
   const parsedProjectedIncrease = parseFloat(scePecentage)
   const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
@@ -293,6 +331,96 @@ const Calculator = () => {
     chartData.length
   ].join('|'), [rate, projectedBills.sunrunBills, projectedBills.sceBills, chartData.length])
 
+  const summaryText = rate !== null
+    ? [
+      `Current rate: $${rate} per kWh`,
+      projectedMonthlyBillNumber !== null
+        ? `Projected monthly bill with utility increases: $${formatCurrency(projectedMonthlyBillNumber, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`
+        : null,
+      sunrunMonthlyCostNumber !== null
+        ? `Sunrun monthly cost: $${formatCurrency(sunrunMonthlyCostNumber, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`
+        : null,
+      monthlyDifferenceDisplay !== null
+        ? `Monthly difference: $${formatCurrency(monthlyDifferenceDisplay, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })} ${monthlyDifferenceLabel}`
+        : null,
+      hasYearlyBreakdown ? `Ten-year total SCE spend: $${formatCurrency(totalSceSpend)}` : null,
+      hasYearlyBreakdown ? `Ten-year total Sunrun spend: $${formatCurrency(totalSunrunSpend)}` : null,
+      hasYearlyBreakdown
+        ? `Ten-year total difference: $${formatCurrency(Math.abs(totalSavings))} ${hasPositiveTotalSavings ? 'saved' : 'additional cost'}`
+        : null,
+      hasBreakEven
+        ? `Projected break-even year: ${breakEvenYear}`
+        : 'Break-even not reached within projection.'
+    ].filter(Boolean).join('\n')
+    : ''
+
+  const handleCopySummary = useCallback(() => {
+    if (!summaryText) {
+      setCopyStatus('')
+      return
+    }
+
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      setCopyStatus('Clipboard unavailable')
+      return
+    }
+
+    navigator.clipboard.writeText(summaryText)
+      .then(() => {
+        setCopyStatus('Copied to clipboard')
+      })
+      .catch(() => {
+        setCopyStatus('Copy failed')
+      })
+  }, [summaryText])
+
+  const handleDownloadCSV = useCallback(() => {
+    if (!hasYearlyBreakdown || typeof document === 'undefined') {
+      return
+    }
+
+    const headers = ['Year', 'SCE annual bill', 'Sunrun annual bill', 'Annual difference', 'Cumulative savings']
+    const rows = yearlyBreakdown.map((item) => [
+      item.year,
+      item.sceAnnual.toFixed(2),
+      item.sunrunAnnual.toFixed(2),
+      item.diffAnnual.toFixed(2),
+      item.cumulativeSavings.toFixed(2)
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'kwh-projection.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }, [hasYearlyBreakdown, yearlyBreakdown])
+
+  useEffect(() => {
+    if (!copyStatus) {
+      return undefined
+    }
+
+    const timer = setTimeout(() => {
+      setCopyStatus('')
+    }, 2800)
+
+    return () => clearTimeout(timer)
+  }, [copyStatus])
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined
@@ -304,9 +432,10 @@ const Calculator = () => {
       return undefined
     }
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const supportsMatchMedia = typeof window.matchMedia === 'function'
+    const prefersReducedMotion = supportsMatchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
 
-    if (prefersReducedMotion.matches) {
+    if (!supportsMatchMedia || prefersReducedMotion.matches) {
       animatableElements.forEach((element) => {
         element.classList.add('is-visible')
       })
@@ -483,6 +612,30 @@ const Calculator = () => {
                       : 'If this value reads zero, lower the Sunrun starting cost or adjust rate increases to uncover savings.'}
                   </p>
                 </article>
+                <article className="insight-card accent-slate animatable" data-animate style={{ '--delay': '0.46s' }}>
+                  <span className="insight-label">10-year spend gap</span>
+                  <span className="insight-metric">
+                    {hasYearlyBreakdown ? `$${formatCurrency(Math.abs(totalSavings))}` : '--'}
+                    {hasYearlyBreakdown && (
+                      <span className="insight-unit"> {totalDifferenceLabel}</span>
+                    )}
+                  </span>
+                  <p className="insight-caption">
+                    {hasYearlyBreakdown
+                      ? hasPositiveTotalSavings
+                        ? 'Total projected savings when comparing annual spend over the next decade.'
+                        : 'Sunrun costs more overall—adjust the starting price or rate escalations to find savings.'
+                      : 'Add a Sunrun monthly cost to compare total spending over time.'}
+                  </p>
+                </article>
+                <article className="insight-card accent-indigo animatable" data-animate style={{ '--delay': '0.52s' }}>
+                  <span className="insight-label">Break-even outlook</span>
+                  <span className="insight-metric">
+                    {hasBreakEven ? breakEvenYear : '--'}
+                    {hasBreakEven && <span className="insight-unit"> projected</span>}
+                  </span>
+                  <p className="insight-caption">{breakEvenDescription}</p>
+                </article>
               </div>
 
               <div className="assumption-panel animatable" data-animate style={{ '--delay': '0.28s' }}>
@@ -565,6 +718,19 @@ const Calculator = () => {
                   </div>
                 </div>
               )}
+              {hasYearlyBreakdown && (
+                <div className="projection-actions animatable" data-animate style={{ '--delay': '0.38s' }}>
+                  <div className="projection-actions__buttons">
+                    <button type="button" className="utility-button" onClick={handleCopySummary}>
+                      <ContentCopyIcon /> Copy quick summary
+                    </button>
+                    <button type="button" className="utility-button secondary" onClick={handleDownloadCSV}>
+                      <DownloadIcon /> Download CSV
+                    </button>
+                  </div>
+                  {copyStatus && <span className="projection-actions__status">{copyStatus}</span>}
+                </div>
+              )}
             </>
           ) : (
             <div className="empty-state animatable" data-animate style={{ '--delay': '0.12s' }}>
@@ -624,6 +790,67 @@ const Calculator = () => {
                 <Line type="monotone" dataKey="SCE" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </ComposedChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {hasYearlyBreakdown && (
+        <div className="yearly-breakdown-card surface-card animatable" data-animate style={{ '--delay': '0.24s' }}>
+          <div className="yearly-breakdown__header">
+            <div className="yearly-breakdown__title">
+              <span className="yearly-breakdown__badge"><TableChartIcon /> Yearly breakdown</span>
+              <h3>Compare annual totals side by side</h3>
+            </div>
+            <p>See how cumulative savings build each year as rates change.</p>
+          </div>
+          <div className="yearly-breakdown__table-wrapper">
+            <table className="yearly-breakdown__table">
+              <thead>
+                <tr>
+                  <th scope="col">Year</th>
+                  <th scope="col">SCE annual bill</th>
+                  <th scope="col">Sunrun annual bill</th>
+                  <th scope="col">Annual difference</th>
+                  <th scope="col">Cumulative savings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {yearlyBreakdown.map((item) => (
+                  <tr key={item.year}>
+                    <td>{item.year}</td>
+                    <td>${formatCurrency(item.sceAnnual)}</td>
+                    <td>${formatCurrency(item.sunrunAnnual)}</td>
+                    <td data-positive={item.diffAnnual >= 0}>
+                      ${formatCurrency(Math.abs(item.diffAnnual))}
+                      <span className="yearly-breakdown__difference-label">
+                        {item.diffAnnual >= 0 ? 'saved' : 'extra cost'}
+                      </span>
+                    </td>
+                    <td data-positive={item.cumulativeSavings >= 0}>
+                      ${formatCurrency(Math.abs(item.cumulativeSavings))}
+                      <span className="yearly-breakdown__difference-label">
+                        {item.cumulativeSavings >= 0 ? 'saved total' : 'extra overall'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">10-year totals</th>
+                  <td>${formatCurrency(totalSceSpend)}</td>
+                  <td>${formatCurrency(totalSunrunSpend)}</td>
+                  <td data-positive={totalSavings >= 0}>
+                    ${formatCurrency(Math.abs(totalSavings))}
+                    <span className="yearly-breakdown__difference-label">{hasPositiveTotalSavings ? 'saved total' : 'extra cost'}</span>
+                  </td>
+                  <td data-positive={totalSavings >= 0}>
+                    ${formatCurrency(Math.abs(totalSavings))}
+                    <span className="yearly-breakdown__difference-label">{hasPositiveTotalSavings ? 'net savings' : 'net cost'}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       )}
