@@ -599,6 +599,16 @@ button:hover::after {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
+.sunrun-input-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.sunrun-input-grid .sunrun-input-row {
+  flex: 1 1 220px;
+}
+
 .sunrun-input-row {
   display: flex;
   flex-direction: column;
@@ -627,6 +637,17 @@ button:hover::after {
   outline: none;
   border-color: #22c55e;
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+}
+
+.sunrun-input-helpers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sunrun-input-helpers .input-helper {
+  flex: 1 1 220px;
+  margin: 0;
 }
 
 .sunrun-calculate-btn {
