@@ -114,6 +114,17 @@ body {
   transform: rotate(12deg);
 }
 
+.surface-card::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+  z-index: -2;
+  pointer-events: none;
+}
+
 .form-header {
   margin-bottom: 18px;
 }
@@ -361,6 +372,11 @@ button {
   background: linear-gradient(135deg, rgba(254, 243, 199, 0.6), rgba(254, 249, 195, 0.35));
 }
 
+.accent-violet {
+  border-color: rgba(196, 181, 253, 0.5);
+  background: linear-gradient(135deg, rgba(221, 214, 254, 0.55), rgba(233, 213, 255, 0.35));
+}
+
 .empty-state {
   padding: 26px;
   border-radius: 18px;
@@ -430,6 +446,152 @@ button {
   opacity: 0.45;
 }
 
+.savings-summary {
+  margin-top: 26px;
+  padding: 22px 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(135deg, rgba(226, 232, 240, 0.6), rgba(248, 250, 252, 0.45));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.14);
+}
+
+.savings-summary__header h4 {
+  margin: 8px 0 4px;
+  font-size: 1.25rem;
+}
+
+.savings-summary__header p {
+  margin: 0;
+  color: #475569;
+}
+
+.savings-summary__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.savings-summary__grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.metric-chip {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+}
+
+.metric-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.08));
+  color: #1d4ed8;
+}
+
+.metric-chip__label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.metric-chip__value {
+  margin: 4px 0 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.metric-chip__value span {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2563eb;
+}
+
+.metric-chip__caption {
+  margin: 0;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.assumption-panel {
+  margin-top: 20px;
+  padding: 20px 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.65), rgba(219, 234, 254, 0.35));
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.assumption-panel__header h4 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+}
+
+.assumption-panel__header p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.assumption-panel__grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.assumption-metric {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 16px 28px rgba(148, 163, 184, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assumption-metric__label {
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(30, 41, 59, 0.7);
+}
+
+.assumption-metric__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.assumption-panel__caption {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
 .chart-header h3 {
   margin: 0;
   font-size: 1.4rem;
@@ -557,6 +719,14 @@ button {
 
   .sunrun-input-row input {
     max-width: 100%;
+  }
+
+  .savings-summary__grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .assumption-panel__grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
 
