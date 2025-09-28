@@ -1564,6 +1564,28 @@ button:hover::after {
   font-size: 0.95rem;
 }
 
+.recharts-line-SunRun path {
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.35));
+}
+
+.recharts-line-SCE path {
+  filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.32));
+}
+
+.recharts-line-SunRun .recharts-dot {
+  fill: #4338ca !important;
+  stroke: rgba(199, 210, 254, 0.95) !important;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 6px rgba(79, 70, 229, 0.45));
+}
+
+.recharts-line-SCE .recharts-dot {
+  fill: #be185d !important;
+  stroke: rgba(251, 207, 232, 0.95) !important;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 6px rgba(244, 114, 182, 0.4));
+}
+
 .recharts-default-legend {
   padding-right: 14px !important;
 }
