@@ -1578,21 +1578,21 @@ const Calculator = () => {
                     <stop offset="100%" stopColor="#c084fc" stopOpacity={0.08} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="#cbd5f5" vertical={false} />
+                <CartesianGrid strokeDasharray="4 4" stroke="#3d4f7c" vertical={false} />
                 <XAxis
                   dataKey="year"
-                  tick={{ fontSize: 12, fill: '#334155' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#e2e8f0' }}
                   angle={-30}
                   textAnchor="end"
                   interval={0}
                   height={70}
-                  tickMargin={14}
+                  tickMargin={18}
                 />
                 <YAxis
                   tickFormatter={currencyFormatter}
-                  tick={{ fontSize: 12, fill: '#334155' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#e2e8f0' }}
                   width={90}
-                  tickMargin={12}
+                  tickMargin={16}
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#94a3b8' }} />
                 {isDesktop && (
