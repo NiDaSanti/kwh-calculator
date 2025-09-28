@@ -535,7 +535,10 @@ const Calculator = () => {
 
           <div className="chart-wrapper">
             <ResponsiveContainer width="100%" height={420}>
-              <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 36, right: 36, bottom: 56, left: 24 }}
+              >
                 <defs>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#22c55e" stopOpacity={0.35} />
@@ -543,14 +546,27 @@ const Calculator = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="4 4" stroke="#cbd5f5" vertical={false} />
-                <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#334155' }} angle={-30} textAnchor="end" interval={0} height={70} />
-                <YAxis tickFormatter={currencyFormatter} tick={{ fontSize: 12, fill: '#334155' }} width={90} />
+                <XAxis
+                  dataKey="year"
+                  tick={{ fontSize: 12, fill: '#334155' }}
+                  angle={-30}
+                  textAnchor="end"
+                  interval={0}
+                  height={70}
+                  tickMargin={14}
+                />
+                <YAxis
+                  tickFormatter={currencyFormatter}
+                  tick={{ fontSize: 12, fill: '#334155' }}
+                  width={90}
+                  tickMargin={12}
+                />
                 <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#94a3b8' }} />
                 {isDesktop && (
                   <Legend
                     verticalAlign="top"
                     align="right"
-                    wrapperStyle={{ paddingBottom: 20 }}
+                    wrapperStyle={{ paddingBottom: 20, paddingTop: 8 }}
                     iconType="circle"
                   />
                 )}
