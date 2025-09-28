@@ -14,20 +14,17 @@ import TableChartIcon from '@mui/icons-material/TableChart'
 import SavingsTwoToneIcon from '@mui/icons-material/SavingsTwoTone'
 import './styles.css'  // Importing the updated CSS file
 
-const xYearsLabel = [
-  '2025',
-  '2026',
-  '2027',
-  '2028',
-  '2029',
-  '2030',
-  '2031',
-  '2032',
-  '2033',
-  '2034',
-  '2035'
-]
+const DEFAULT_PROJECTION_YEARS = 10
+const MIN_PROJECTION_YEARS = 5
+const MAX_PROJECTION_YEARS = 20
 const DEFAULT_SUNRUN_ESCALATION = 3.5
+
+const generateYearLabels = (startYear, count) => {
+  const safeStartYear = Number.isFinite(startYear) ? Math.floor(startYear) : new Date().getFullYear()
+  const safeCount = Number.isFinite(count) && count > 0 ? Math.floor(count) : 0
+
+  return Array.from({ length: safeCount }, (_, index) => String(safeStartYear + index))
+}
 
 const FIELD_CONSTRAINTS = {
   charges: {
@@ -173,6 +170,12 @@ const Calculator = () => {
   const [copyStatus, setCopyStatus] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [sunrunProjectionStatus, setSunrunProjectionStatus] = useState(null)
+  const [projectionYears, setProjectionYears] = useState(DEFAULT_PROJECTION_YEARS)
+  const projectionStartYear = useMemo(() => new Date().getFullYear(), [])
+  const yearLabels = useMemo(
+    () => generateYearLabels(projectionStartYear, projectionYears),
+    [projectionStartYear, projectionYears]
+  )
 
   const setFieldError = useCallback((name, message) => {
     setFieldErrors((prev) => {
@@ -272,14 +275,14 @@ const Calculator = () => {
       Number.isNaN(parsedInitialIncrease) ? 0 : parsedInitialIncrease,
       Number.isNaN(parsedMinIncrease) ? 0 : parsedMinIncrease,
       safeEscalation,
-      xYearsLabel.length
+      yearLabels.length
     )
 
     setProjectedBills({
       sunrunBills: sunrunBills.map((bill) => bill.toFixed(2)),
       sceBills: sceBills.map((bill) => bill.toFixed(2))
     })
-  }, [scePecentage, projectedFutureRateIncrease, sunrunEscalation])
+  }, [scePecentage, projectedFutureRateIncrease, sunrunEscalation, yearLabels.length])
 
   useEffect(() => {
     const parsedPercentage = parseFloat(scePecentage)
@@ -389,9 +392,10 @@ const Calculator = () => {
     setProjectedBills({ sunrunBills: [], sceBills: [] })
     setFieldErrors({})
     setSunrunProjectionStatus(null)
+    setProjectionYears(DEFAULT_PROJECTION_YEARS)
   }
 
-  const chartData = useMemo(() => xYearsLabel
+  const chartData = useMemo(() => yearLabels
     .map((year, index) => {
       const sunrunBill = projectedBills.sunrunBills[index]
       const sceBill = projectedBills.sceBills[index]
@@ -410,7 +414,7 @@ const Calculator = () => {
         Savings: sceValue - sunrunValue
       }
     })
-    .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills])
+    .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills, yearLabels])
 
   const yearlyBreakdown = useMemo(() => {
     if (chartData.length === 0) {
@@ -447,7 +451,7 @@ const Calculator = () => {
   const firstYearDifference = chartData.length > 0 ? chartData[0].Savings * 12 : null
   const finalYearDifference = chartData.length > 0 ? chartData[chartData.length - 1].Savings * 12 : null
   const fiveYearDifference = chartData.length > 0 ? chartData.slice(0, 5).reduce((acc, item) => acc + item.Savings * 12, 0) : null
-  const cumulativeTenYearDifference = yearlyBreakdown.length > 0
+  const cumulativeProjectionDifference = yearlyBreakdown.length > 0
     ? yearlyBreakdown[yearlyBreakdown.length - 1].cumulativeSavings
     : null
   const peakSavings = chartData.reduce((best, item) => {
@@ -462,7 +466,7 @@ const Calculator = () => {
   const hasFirstYearDifference = firstYearDifference !== null && firstYearDifference !== 0
   const hasFinalYearDifference = finalYearDifference !== null && finalYearDifference !== 0
   const hasFiveYearDifference = fiveYearDifference !== null && fiveYearDifference !== 0
-  const hasCumulativeTenYearDifference = cumulativeTenYearDifference !== null && cumulativeTenYearDifference !== 0
+  const hasCumulativeProjectionDifference = cumulativeProjectionDifference !== null && cumulativeProjectionDifference !== 0
   const hasPeakSavings = peakSavings !== null && peakSavings.Savings > 0
   const hasYearlyBreakdown = yearlyBreakdown.length > 0
   const totalSunrunSpend = yearlyBreakdown.reduce((acc, item) => acc + item.sunrunAnnual, 0)
@@ -471,9 +475,17 @@ const Calculator = () => {
   const hasPositiveTotalSavings = totalSavings > 0
   const breakEvenYear = yearlyBreakdown.find((item) => item.cumulativeSavings > 0)?.year ?? null
   const hasBreakEven = breakEvenYear !== null
-  const projectionYears = chartData.length
   const projectionLabel = projectionYears > 0 ? `${projectionYears}-year` : ''
   const finalYearLabel = chartData.length > 0 ? chartData[chartData.length - 1].year : null
+  const projectionWindowStart = yearLabels[0] ?? null
+  const projectionWindowEnd = yearLabels.length > 0 ? yearLabels[yearLabels.length - 1] : null
+  const projectionWindowDisplay = projectionWindowStart && projectionWindowEnd
+    ? `${projectionWindowStart}–${projectionWindowEnd}`
+    : ''
+  const projectionPillLabel = projectionLabel
+    ? `${projectionLabel} horizon${projectionWindowDisplay ? ` (${projectionWindowDisplay})` : ''}`
+    : 'Dynamic projection horizon'
+  const projectionYearsText = projectionYears === 1 ? 'year' : 'years'
   const summaryProjectionLabel = projectionLabel || 'Projection window'
   const totalDifferenceLabel = hasYearlyBreakdown
     ? `${projectionLabel} ${hasPositiveTotalSavings ? 'saved total' : 'additional cost'}`.trim()
@@ -525,7 +537,7 @@ const Calculator = () => {
         definition.firstYear,
         definition.ongoing,
         safeSunrunEscalation,
-        xYearsLabel.length
+        yearLabels.length
       )
 
       if (sunrunBills.length === 0 || sceBills.length === 0) {
@@ -539,7 +551,7 @@ const Calculator = () => {
 
       return {
         ...definition,
-        finalYear: xYearsLabel[finalIndex],
+        finalYear: yearLabels[finalIndex],
         finalMonthlyDiff,
         finalAnnualDiff: finalMonthlyDiff * 12,
         cumulative,
@@ -575,7 +587,14 @@ const Calculator = () => {
         ongoing: ongoingIncrease + 2
       }
     ].map(summarize).filter(Boolean)
-  }, [avgPerMonthCost, projectedFutureRateIncrease, scePecentage, sunrunEscalation, sunrunMonthlyCostNumber])
+  }, [
+    avgPerMonthCost,
+    projectedFutureRateIncrease,
+    scePecentage,
+    sunrunEscalation,
+    sunrunMonthlyCostNumber,
+    yearLabels
+  ])
 
   const parsedProjectedIncrease = parseFloat(scePecentage)
   const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
@@ -642,6 +661,9 @@ const Calculator = () => {
         })}`
         : null,
       `Sunrun escalation: ${formatPercentage(effectiveSunrunEscalation)}`,
+      projectionWindowStart && projectionWindowEnd
+        ? `Projection horizon: ${projectionWindowStart}–${projectionWindowEnd} (${projectionYears} ${projectionYearsText})`
+        : null,
       monthlyDifferenceDisplay !== null
         ? `Monthly difference: $${formatCurrency(monthlyDifferenceDisplay, {
           minimumFractionDigits: 2,
@@ -717,6 +739,10 @@ const Calculator = () => {
 
     lines.push(`Sunrun escalation: ${formatPercentage(effectiveSunrunEscalation)}`)
 
+    if (projectionWindowStart && projectionWindowEnd) {
+      lines.push(`Projection horizon: ${projectionWindowStart}–${projectionWindowEnd} (${projectionYears} ${projectionYearsText})`)
+    }
+
     if (monthlyDifferenceDisplay !== null) {
       lines.push(`Monthly difference: ${formatDollars(monthlyDifferenceDisplay)} ${monthlyDifferenceLabel}`)
     }
@@ -762,6 +788,10 @@ const Calculator = () => {
     rate,
     sunrunMonthlyCostNumber,
     effectiveSunrunEscalation,
+    projectionWindowEnd,
+    projectionWindowStart,
+    projectionYears,
+    projectionYearsText,
     summaryProjectionLabel,
     totalSavings,
     totalSceSpend,
@@ -831,7 +861,7 @@ const Calculator = () => {
         <h1><span>Visualize</span> your SCE costs with clarity</h1>
         <p>Enter your recent charges and usage to calculate today&rsquo;s rate, then explore how your percentage-based projections stack up against a steady Sunrun plan.</p>
         <div className="header-pills">
-          <span>10-year projection</span>
+          <span>{projectionPillLabel}</span>
           <span>Side-by-side comparison</span>
           <span>Custom Sunrun plan</span>
         </div>
@@ -1165,6 +1195,30 @@ const Calculator = () => {
                     {sunrunProjectionStatus.message}
                   </p>
                 )}
+                <div className="projection-length-control">
+                  <label htmlFor="projection-years">
+                    <EventAvailableIcon /> Projection length
+                  </label>
+                  <input
+                    id="projection-years"
+                    type="range"
+                    min={MIN_PROJECTION_YEARS}
+                    max={MAX_PROJECTION_YEARS}
+                    step={1}
+                    value={projectionYears}
+                    onChange={(event) => {
+                      setProjectionYears(Number(event.target.value))
+                      setSunrunProjectionStatus(null)
+                    }}
+                  />
+                  <div className="projection-length-control__values">
+                    <span>{projectionYears} {projectionYearsText}</span>
+                    {projectionWindowDisplay && <span>{projectionWindowDisplay}</span>}
+                  </div>
+                  <p className="projection-length-control__caption">
+                    Choose how many years of bills to include across charts, tables, and summaries.
+                  </p>
+                </div>
               </div>
 
               <div className="insight-highlights">
@@ -1403,7 +1457,7 @@ const Calculator = () => {
                 </div>
               )}
 
-              {(hasCumulativeTenYearDifference || hasPeakSavings) && (
+              {(hasCumulativeProjectionDifference || hasPeakSavings) && (
                 <div className="savings-summary animatable" data-animate style={{ '--delay': '0.38s' }}>
                   <div className="savings-summary__header">
                     <span className="savings-summary__badge"><TrendingUpIcon /> Savings storyline</span>
@@ -1418,14 +1472,14 @@ const Calculator = () => {
                       <div>
                         <p className="metric-chip__label">{projectionLabel || 'Long-term'} cumulative</p>
                         <p className="metric-chip__value">
-                          {hasCumulativeTenYearDifference ? `$${formatCurrencyAbsolute(cumulativeTenYearDifference)}` : '--'}
-                          {hasCumulativeTenYearDifference && (
-                            <span> {cumulativeTenYearDifference > 0 ? 'saved' : 'added cost'}</span>
+                          {hasCumulativeProjectionDifference ? `$${formatCurrencyAbsolute(cumulativeProjectionDifference)}` : '--'}
+                          {hasCumulativeProjectionDifference && (
+                            <span> {cumulativeProjectionDifference > 0 ? 'saved' : 'added cost'}</span>
                           )}
                         </p>
                         <p className="metric-chip__caption">
-                          {hasCumulativeTenYearDifference
-                            ? cumulativeTenYearDifference > 0
+                          {hasCumulativeProjectionDifference
+                            ? cumulativeProjectionDifference > 0
                               ? 'Total savings when comparing month-to-month bills over your projection horizon.'
                               : 'Sunrun adds to your projected costs compared with SCE over this horizon.'
                             : 'Adjust assumptions until Sunrun pulls ahead to reveal multi-year differences.'}
@@ -1479,8 +1533,11 @@ const Calculator = () => {
       {rate !== null && chartData.length > 0 && (
         <div className="chart-card surface-card animatable" data-animate style={{ '--delay': '0.18s' }}>
           <div className="chart-header">
-            <h3>Projected monthly bills (next 10 years)</h3>
-            <p>Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {formatPercentage(effectiveSunrunEscalation)} escalation.</p>
+            <h3>Projected monthly bills (next {projectionYears} {projectionYearsText})</h3>
+            <p>
+              Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {formatPercentage(effectiveSunrunEscalation)} escalation
+              across {projectionWindowDisplay || 'your selected horizon'}.
+            </p>
           </div>
 
           <div className="chart-wrapper">
