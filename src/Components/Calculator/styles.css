@@ -905,30 +905,40 @@ button:hover::after {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 55%);
+  background: linear-gradient(140deg, rgba(6, 16, 36, 0.94), rgba(18, 33, 62, 0.88));
+  border: 1px solid rgba(88, 121, 180, 0.35);
+  box-shadow: 0 35px 65px rgba(5, 15, 35, 0.55);
   position: relative;
   overflow: hidden;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease;
+  isolation: isolate;
+  backdrop-filter: blur(18px);
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease, border-color 0.55s ease;
 }
 
-.chart-card::before {
-  content: '';
-  position: absolute;
-  inset: auto -30% -45% auto;
-  height: 260px;
-  width: 260px;
-  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), transparent 70%);
-  opacity: 0.5;
-}
-
+.chart-card::before,
 .chart-card::after {
   content: '';
   position: absolute;
-  inset: -35% auto auto -30%;
-  height: 220px;
-  width: 220px;
-  background: radial-gradient(circle at center, rgba(251, 191, 36, 0.18), transparent 70%);
-  opacity: 0.45;
+  border-radius: 50%;
+  filter: blur(0);
+  opacity: 0.7;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.chart-card::before {
+  inset: auto -28% -45% auto;
+  height: 280px;
+  width: 280px;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.35), rgba(10, 22, 47, 0.05) 70%);
+}
+
+.chart-card::after {
+  inset: -36% auto auto -32%;
+  height: 240px;
+  width: 240px;
+  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.28), rgba(8, 17, 37, 0.04) 70%);
+  mix-blend-mode: screen;
 }
 
 .yearly-breakdown-card {
@@ -1501,6 +1511,43 @@ button:hover::after {
   padding: 16px 12px 24px;
   position: relative;
   z-index: 1;
+}
+
+.chart-wrapper::before,
+.chart-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  border-radius: 18px;
+  opacity: 0.55;
+  transition: opacity 0.4s ease;
+}
+
+.chart-wrapper::before {
+  background: repeating-linear-gradient(
+      0deg,
+      rgba(148, 189, 255, 0.06) 0px,
+      rgba(148, 189, 255, 0.06) 1px,
+      transparent 1px,
+      transparent 22px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(148, 189, 255, 0.07) 0px,
+      rgba(148, 189, 255, 0.07) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+  z-index: 0;
+}
+
+.chart-wrapper::after {
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.12), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(192, 132, 252, 0.12), transparent 60%);
+  mix-blend-mode: lighten;
+  z-index: 0;
 }
 
 .chart-tooltip {
