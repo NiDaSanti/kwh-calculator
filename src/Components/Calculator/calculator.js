@@ -27,7 +27,7 @@ const xYearsLabel = [
   '2034',
   '2035'
 ]
-const SUNRUN_ESCALATION = 3.5
+const DEFAULT_SUNRUN_ESCALATION = 3.5
 
 const FIELD_CONSTRAINTS = {
   charges: {
@@ -59,10 +59,22 @@ const FIELD_CONSTRAINTS = {
     min: 0,
     max: 5000,
     helper: 'Enter a Sunrun monthly cost between $0 and $5,000.'
+  },
+  sunrunEscalation: {
+    min: 0,
+    max: 20,
+    helper: 'Enter a Sunrun escalation between 0% and 20%.'
   }
 }
 
-const computeProjectedBills = (initialBill, sunRunStartMonthlyCost, firstYearIncrease, ongoingIncrease, totalYears) => {
+const computeProjectedBills = (
+  initialBill,
+  sunRunStartMonthlyCost,
+  firstYearIncrease,
+  ongoingIncrease,
+  sunrunEscalation,
+  totalYears
+) => {
   if (
     !Number.isFinite(initialBill) ||
     !Number.isFinite(sunRunStartMonthlyCost) ||
@@ -75,8 +87,11 @@ const computeProjectedBills = (initialBill, sunRunStartMonthlyCost, firstYearInc
 
   const safeFirstYearIncrease = Number.isFinite(firstYearIncrease) ? firstYearIncrease : 0
   const safeOngoingIncrease = Number.isFinite(ongoingIncrease) ? ongoingIncrease : safeFirstYearIncrease
+  const safeSunrunEscalation = Number.isFinite(sunrunEscalation)
+    ? sunrunEscalation
+    : DEFAULT_SUNRUN_ESCALATION
 
-  const sunrunIncrease = 1 + SUNRUN_ESCALATION / 100
+  const sunrunIncrease = 1 + safeSunrunEscalation / 100
   const firstYearFactor = 1 + safeFirstYearIncrease / 100
   const ongoingFactor = 1 + safeOngoingIncrease / 100
 
@@ -143,6 +158,7 @@ const Calculator = () => {
   const [scePecentage, setScePecentage] = useState('')
   const [projectedMonthlyBill, setProjectedMonthlyBill] = useState(null)
   const [sunRunMonthlyCost, setSunRunMonthlyCost] = useState('')
+  const [sunrunEscalation, setSunrunEscalation] = useState(DEFAULT_SUNRUN_ESCALATION.toString())
   const [rate, setRate] = useState(null)
   const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
@@ -248,11 +264,14 @@ const Calculator = () => {
   const generateProjectedBills = useCallback((initialBill, sunRunStartMonthlyCost) => {
     const parsedInitialIncrease = parseFloat(scePecentage)
     const parsedMinIncrease = parseFloat(projectedFutureRateIncrease)
+    const parsedEscalation = parseFloat(sunrunEscalation)
+    const safeEscalation = Number.isNaN(parsedEscalation) ? DEFAULT_SUNRUN_ESCALATION : parsedEscalation
     const { sunrunBills, sceBills } = computeProjectedBills(
       initialBill,
       sunRunStartMonthlyCost,
       Number.isNaN(parsedInitialIncrease) ? 0 : parsedInitialIncrease,
       Number.isNaN(parsedMinIncrease) ? 0 : parsedMinIncrease,
+      safeEscalation,
       xYearsLabel.length
     )
 
@@ -260,7 +279,7 @@ const Calculator = () => {
       sunrunBills: sunrunBills.map((bill) => bill.toFixed(2)),
       sceBills: sceBills.map((bill) => bill.toFixed(2))
     })
-  }, [scePecentage, projectedFutureRateIncrease])
+  }, [scePecentage, projectedFutureRateIncrease, sunrunEscalation])
 
   useEffect(() => {
     const parsedPercentage = parseFloat(scePecentage)
@@ -329,7 +348,8 @@ const Calculator = () => {
     const parsedSunrun = parseFloat(sunRunMonthlyCost)
 
     const isValid = validateFields({
-      sunRunMonthlyCost
+      sunRunMonthlyCost,
+      sunrunEscalation
     })
 
     if (!isValid) {
@@ -361,6 +381,7 @@ const Calculator = () => {
     setAnnualUsage('')
     setScePecentage('')
     setSunRunMonthlyCost('')
+    setSunrunEscalation(DEFAULT_SUNRUN_ESCALATION.toString())
     setRate(null)
     setProjectedFutureRateIncrease('0.00')
     setAvgPerMonthCost(null)
@@ -416,6 +437,10 @@ const Calculator = () => {
 
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
+  const sunrunEscalationNumber = sunrunEscalation ? parseFloat(sunrunEscalation) : null
+  const effectiveSunrunEscalation = Number.isFinite(sunrunEscalationNumber)
+    ? sunrunEscalationNumber
+    : DEFAULT_SUNRUN_ESCALATION
   const monthlyDifference = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
     ? projectedMonthlyBillNumber - sunrunMonthlyCostNumber
     : null
@@ -486,8 +511,12 @@ const Calculator = () => {
 
     const parsedProjectedIncrease = parseFloat(scePecentage)
     const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
+    const parsedSunrunEscalation = parseFloat(sunrunEscalation)
     const firstYearIncrease = Number.isNaN(parsedProjectedIncrease) ? 0 : parsedProjectedIncrease
     const ongoingIncrease = Number.isNaN(parsedBaselineIncrease) ? firstYearIncrease : parsedBaselineIncrease
+    const safeSunrunEscalation = Number.isNaN(parsedSunrunEscalation)
+      ? DEFAULT_SUNRUN_ESCALATION
+      : parsedSunrunEscalation
 
     const summarize = (definition) => {
       const { sunrunBills, sceBills } = computeProjectedBills(
@@ -495,6 +524,7 @@ const Calculator = () => {
         sunrunStart,
         definition.firstYear,
         definition.ongoing,
+        safeSunrunEscalation,
         xYearsLabel.length
       )
 
@@ -545,7 +575,7 @@ const Calculator = () => {
         ongoing: ongoingIncrease + 2
       }
     ].map(summarize).filter(Boolean)
-  }, [avgPerMonthCost, projectedFutureRateIncrease, scePecentage, sunrunMonthlyCostNumber])
+  }, [avgPerMonthCost, projectedFutureRateIncrease, scePecentage, sunrunEscalation, sunrunMonthlyCostNumber])
 
   const parsedProjectedIncrease = parseFloat(scePecentage)
   const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
@@ -554,7 +584,7 @@ const Calculator = () => {
   const projectedVsBaselineDiff = hasProjectedIncrease && hasBaselineIncrease
     ? parsedProjectedIncrease - parsedBaselineIncrease
     : null
-  const projectedVsSunrunDiff = hasProjectedIncrease ? parsedProjectedIncrease - SUNRUN_ESCALATION : null
+  const projectedVsSunrunDiff = hasProjectedIncrease ? parsedProjectedIncrease - effectiveSunrunEscalation : null
   const formatPercentage = (value) => {
     if (value === null || Number.isNaN(value)) {
       return '--'
@@ -611,6 +641,7 @@ const Calculator = () => {
           maximumFractionDigits: 2
         })}`
         : null,
+      `Sunrun escalation: ${formatPercentage(effectiveSunrunEscalation)}`,
       monthlyDifferenceDisplay !== null
         ? `Monthly difference: $${formatCurrency(monthlyDifferenceDisplay, {
           minimumFractionDigits: 2,
@@ -684,6 +715,8 @@ const Calculator = () => {
       lines.push(`Sunrun monthly cost: ${formatDollars(sunrunMonthlyCostNumber)}`)
     }
 
+    lines.push(`Sunrun escalation: ${formatPercentage(effectiveSunrunEscalation)}`)
+
     if (monthlyDifferenceDisplay !== null) {
       lines.push(`Monthly difference: ${formatDollars(monthlyDifferenceDisplay)} ${monthlyDifferenceLabel}`)
     }
@@ -728,6 +761,7 @@ const Calculator = () => {
     projectedMonthlyBillNumber,
     rate,
     sunrunMonthlyCostNumber,
+    effectiveSunrunEscalation,
     summaryProjectionLabel,
     totalSavings,
     totalSceSpend,
@@ -1077,26 +1111,54 @@ const Calculator = () => {
 
               <div className="sunrun-input-container animatable" data-animate style={{ '--delay': '0.18s' }}>
                 <p className="warning-label">Compare against a Sunrun plan</p>
-                <div className="sunrun-input-row">
-                  <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
-                  <input
-                    id="sunrun-rate"
-                    className={fieldErrors.sunRunMonthlyCost ? 'input-error' : ''}
-                    type="number"
-                    step="0.01"
-                    min={FIELD_CONSTRAINTS.sunRunMonthlyCost.min}
-                    max={FIELD_CONSTRAINTS.sunRunMonthlyCost.max}
-                    value={sunRunMonthlyCost}
-                    onChange={(e) => {
-                      const { value } = e.target
-                      setSunRunMonthlyCost(value)
-                      setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
-                      setSunrunProjectionStatus(null)
-                    }}
-                    placeholder="e.g. 185.00"
-                  />
+                <div className="sunrun-input-grid">
+                  <div className="sunrun-input-row">
+                    <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
+                    <input
+                      id="sunrun-rate"
+                      className={fieldErrors.sunRunMonthlyCost ? 'input-error' : ''}
+                      type="number"
+                      step="0.01"
+                      min={FIELD_CONSTRAINTS.sunRunMonthlyCost.min}
+                      max={FIELD_CONSTRAINTS.sunRunMonthlyCost.max}
+                      value={sunRunMonthlyCost}
+                      onChange={(e) => {
+                        const { value } = e.target
+                        setSunRunMonthlyCost(value)
+                        setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
+                        setSunrunProjectionStatus(null)
+                      }}
+                      placeholder="e.g. 185.00"
+                    />
+                  </div>
+                  <div className="sunrun-input-row">
+                    <label htmlFor="sunrun-escalation"><TrendingUpIcon /> Sunrun escalation</label>
+                    <input
+                      id="sunrun-escalation"
+                      className={fieldErrors.sunrunEscalation ? 'input-error' : ''}
+                      type="number"
+                      step="0.1"
+                      min={FIELD_CONSTRAINTS.sunrunEscalation.min}
+                      max={FIELD_CONSTRAINTS.sunrunEscalation.max}
+                      value={sunrunEscalation}
+                      onChange={(e) => {
+                        const { value } = e.target
+                        setSunrunEscalation(value)
+                        setFieldError('sunrunEscalation', validateField('sunrunEscalation', value))
+                        setSunrunProjectionStatus(null)
+                      }}
+                      placeholder="e.g. 3.5"
+                    />
+                  </div>
                 </div>
-                <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>{getHelperText('sunRunMonthlyCost')}</p>
+                <div className="sunrun-input-helpers">
+                  <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>
+                    {getHelperText('sunRunMonthlyCost')}
+                  </p>
+                  <p className={`input-helper ${fieldErrors.sunrunEscalation ? 'input-helper--error' : ''}`}>
+                    {getHelperText('sunrunEscalation')}
+                  </p>
+                </div>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
                 {sunrunProjectionStatus?.message && (
                   <p className={`input-helper ${sunrunProjectionStatus.type === 'error' ? 'input-helper--error' : ''}`}>
@@ -1121,7 +1183,7 @@ const Calculator = () => {
                   <p className="insight-caption">
                     {hasFirstYearDifference
                       ? firstYearDifference > 0
-                        ? `Keep roughly $${formatCurrencyAbsolute(firstYearDifference)} more in year one when compared with Sunrun's ${SUNRUN_ESCALATION.toFixed(1)}% escalation.`
+                        ? `Keep roughly $${formatCurrencyAbsolute(firstYearDifference)} more in year one when compared with Sunrun's ${formatPercentage(effectiveSunrunEscalation)} escalation.`
                         : `Expect roughly $${formatCurrencyAbsolute(firstYearDifference)} in additional Sunrun costs during year one at the current rate.`
                       : monthlyDifference !== null && monthlyDifference < 0
                         ? 'Sunrun currently adds to your monthly costs—lower the starting rate to see savings.'
@@ -1192,7 +1254,7 @@ const Calculator = () => {
               <div className="assumption-panel animatable" data-animate style={{ '--delay': '0.28s' }}>
                 <div className="assumption-panel__header">
                   <h4>Annual increase inputs</h4>
-                  <p>Compare the percentages you entered for utility growth with Sunrun&rsquo;s assumed escalation.</p>
+                  <p>Compare the percentages you entered for utility growth with your selected Sunrun escalation.</p>
                 </div>
                 <div className="assumption-panel__grid">
                   <div className="assumption-metric">
@@ -1205,7 +1267,7 @@ const Calculator = () => {
                   </div>
                   <div className="assumption-metric">
                     <span className="assumption-metric__label">Sunrun escalation</span>
-                    <span className="assumption-metric__value">{formatPercentage(SUNRUN_ESCALATION)}</span>
+                    <span className="assumption-metric__value">{formatPercentage(effectiveSunrunEscalation)}</span>
                   </div>
                   <div className="assumption-metric">
                     <span className="assumption-metric__label">Projected vs. baseline</span>
@@ -1218,7 +1280,7 @@ const Calculator = () => {
                 </div>
                 <p className="assumption-panel__caption">
                   {hasProjectedIncrease
-                    ? `Your projected SCE increase is ${formatPercentage(parsedProjectedIncrease)} compared with a ${formatPercentage(SUNRUN_ESCALATION)} Sunrun escalation.`
+                    ? `Your projected SCE increase is ${formatPercentage(parsedProjectedIncrease)} compared with a ${formatPercentage(effectiveSunrunEscalation)} Sunrun escalation.`
                     : 'Provide projected and baseline percentages to compare assumptions.'}
                 </p>
               </div>
@@ -1418,7 +1480,7 @@ const Calculator = () => {
         <div className="chart-card surface-card animatable" data-animate style={{ '--delay': '0.18s' }}>
           <div className="chart-header">
             <h3>Projected monthly bills (next 10 years)</h3>
-            <p>Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {SUNRUN_ESCALATION.toFixed(1)}% escalation.</p>
+            <p>Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {formatPercentage(effectiveSunrunEscalation)} escalation.</p>
           </div>
 
           <div className="chart-wrapper">
