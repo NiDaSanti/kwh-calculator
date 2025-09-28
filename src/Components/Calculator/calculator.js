@@ -29,6 +29,39 @@ const xYearsLabel = [
 ]
 const SUNRUN_ESCALATION = 3.5
 
+const FIELD_CONSTRAINTS = {
+  charges: {
+    min: 0,
+    max: 5000,
+    helper: 'Enter monthly charges between $0 and $5,000.'
+  },
+  usage: {
+    min: 0,
+    max: 20000,
+    helper: 'Enter monthly usage between 0 and 20,000 kWh.'
+  },
+  annualUsage: {
+    min: 0,
+    max: 240000,
+    helper: 'Enter annual usage between 0 and 240,000 kWh.'
+  },
+  scePecentage: {
+    min: 0,
+    max: 50,
+    helper: 'Use a rate increase between 0% and 50% to keep projections realistic.'
+  },
+  projectedFutureRateIncrease: {
+    min: 0,
+    max: 50,
+    helper: 'Use a baseline increase between 0% and 50% for ongoing projections.'
+  },
+  sunRunMonthlyCost: {
+    min: 0,
+    max: 5000,
+    helper: 'Enter a Sunrun monthly cost between $0 and $5,000.'
+  }
+}
+
 const computeProjectedBills = (initialBill, sunRunStartMonthlyCost, firstYearIncrease, ongoingIncrease, totalYears) => {
   if (
     !Number.isFinite(initialBill) ||
@@ -128,6 +161,77 @@ const Calculator = () => {
     return window.innerWidth >= 768
   })
   const [copyStatus, setCopyStatus] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
+
+  const setFieldError = useCallback((name, message) => {
+    setFieldErrors((prev) => {
+      if (message) {
+        return { ...prev, [name]: message }
+      }
+
+      if (!prev[name]) {
+        return prev
+      }
+
+      const next = { ...prev }
+      delete next[name]
+
+      return next
+    })
+  }, [])
+
+  const validateField = useCallback((name, rawValue) => {
+    const constraint = FIELD_CONSTRAINTS[name]
+
+    if (!constraint) {
+      return null
+    }
+
+    if (rawValue === '' || rawValue === null || typeof rawValue === 'undefined') {
+      return null
+    }
+
+    const value = typeof rawValue === 'number' ? rawValue : parseFloat(rawValue)
+
+    if (!Number.isFinite(value)) {
+      return constraint.helper
+    }
+
+    if (Number.isFinite(constraint.min) && value < constraint.min) {
+      return constraint.helper
+    }
+
+    if (Number.isFinite(constraint.max) && value > constraint.max) {
+      return constraint.helper
+    }
+
+    return null
+  }, [])
+
+  const getHelperText = useCallback((name) => {
+    const constraint = FIELD_CONSTRAINTS[name]
+
+    if (!constraint) {
+      return ''
+    }
+
+    return fieldErrors[name] || constraint.helper
+  }, [fieldErrors])
+
+  const validateFields = useCallback((fields) => {
+    let hasError = false
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const message = validateField(name, value)
+      setFieldError(name, message)
+
+      if (message) {
+        hasError = true
+      }
+    })
+
+    return !hasError
+  }, [setFieldError, validateField])
   // const [open, setOpen] = useState(false)
   
   // const handleOpen = () => setOpen(true)
@@ -211,11 +315,31 @@ const Calculator = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const isValid = validateFields({
+      charges,
+      usage,
+      annualUsage,
+      scePecentage,
+      projectedFutureRateIncrease
+    })
+
+    if (!isValid) {
+      return
+    }
+
     calculateRate()
   }
 
   const handleSunRunMonthlyCost = (e) => {
     const parsedSunrun = parseFloat(sunRunMonthlyCost)
+
+    const isValid = validateFields({
+      sunRunMonthlyCost
+    })
+
+    if (!isValid) {
+      return
+    }
 
     if (rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0) {
       // Trigger the projected bills calculation with the SunRun start rate
@@ -236,6 +360,7 @@ const Calculator = () => {
     setAvgPerMonthCost(null)
     setProjectedMonthlyBill(null)
     setProjectedBills({ sunrunBills: [], sceBills: [] })
+    setFieldErrors({})
   }
 
   const chartData = useMemo(() => xYearsLabel
@@ -686,17 +811,61 @@ const Calculator = () => {
             <div className="form-grid">
               <div className="form-group">
                 <label><AttachMoneyIcon /> Monthly Charges</label>
-                <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} placeholder="e.g. 225.60" required />
+                <input
+                  className={fieldErrors.charges ? 'input-error' : ''}
+                  type="number"
+                  step="0.01"
+                  min={FIELD_CONSTRAINTS.charges.min}
+                  max={FIELD_CONSTRAINTS.charges.max}
+                  value={charges}
+                  onChange={(e) => {
+                    const { value } = e.target
+                    setCharges(value)
+                    setFieldError('charges', validateField('charges', value))
+                  }}
+                  placeholder="e.g. 225.60"
+                  required
+                />
+                <p className={`input-helper ${fieldErrors.charges ? 'input-helper--error' : ''}`}>{getHelperText('charges')}</p>
               </div>
 
               <div className="form-group">
                 <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
-                <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} placeholder="e.g. 540" required />
+                <input
+                  className={fieldErrors.usage ? 'input-error' : ''}
+                  type="number"
+                  min={FIELD_CONSTRAINTS.usage.min}
+                  max={FIELD_CONSTRAINTS.usage.max}
+                  value={usage}
+                  onChange={(e) => {
+                    const { value } = e.target
+                    setUsage(value)
+                    setFieldError('usage', validateField('usage', value))
+                  }}
+                  placeholder="e.g. 540"
+                  required
+                />
+                <p className={`input-helper ${fieldErrors.usage ? 'input-helper--error' : ''}`}>{getHelperText('usage')}</p>
               </div>
 
               <div className="form-group full-width">
                 <label><BoltTwoToneIcon /> Annual kWh Usage</label>
-                <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} placeholder="e.g. 6480" required />
+                <input
+                  className={fieldErrors.annualUsage ? 'input-error' : ''}
+                  type="number"
+                  step="0.01"
+                  min={FIELD_CONSTRAINTS.annualUsage.min}
+                  max={FIELD_CONSTRAINTS.annualUsage.max}
+                  value={annualUsage}
+                  onChange={(e) => {
+                    const { value } = e.target
+                    setAnnualUsage(value)
+                    setFieldError('annualUsage', validateField('annualUsage', value))
+                  }}
+                  placeholder="e.g. 6480"
+                  required
+                />
+                <p className={`input-helper ${fieldErrors.annualUsage ? 'input-helper--error' : ''}`}>{getHelperText('annualUsage')}</p>
               </div>
             </div>
           </div>
@@ -710,27 +879,41 @@ const Calculator = () => {
               <div className="form-group">
                 <label><PercentIcon /> Rate change percentage</label>
                 <input
+                  className={fieldErrors.scePecentage ? 'input-error' : ''}
                   type="number"
+                  step="0.01"
+                  min={FIELD_CONSTRAINTS.scePecentage.min}
+                  max={FIELD_CONSTRAINTS.scePecentage.max}
                   value={scePecentage}
                   onChange={(e) => {
-                    setScePecentage(e.target.value)
+                    const { value } = e.target
+                    setScePecentage(value)
+                    setFieldError('scePecentage', validateField('scePecentage', value))
                   }}
                   placeholder="Projected annual increase"
                   required
                 />
+                <p className={`input-helper ${fieldErrors.scePecentage ? 'input-helper--error' : ''}`}>{getHelperText('scePecentage')}</p>
               </div>
 
               <div className="form-group">
                 <label><PercentIcon /> Minimal rate percentage</label>
                 <input
+                  className={fieldErrors.projectedFutureRateIncrease ? 'input-error' : ''}
                   type="number"
+                  step="0.01"
+                  min={FIELD_CONSTRAINTS.projectedFutureRateIncrease.min}
+                  max={FIELD_CONSTRAINTS.projectedFutureRateIncrease.max}
                   value={projectedFutureRateIncrease}
                   onChange={(e) => {
-                    setProjectedFutureRateIncrease(e.target.value)
+                    const { value } = e.target
+                    setProjectedFutureRateIncrease(value)
+                    setFieldError('projectedFutureRateIncrease', validateField('projectedFutureRateIncrease', value))
                   }}
                   placeholder="Baseline annual increase"
                   required
                 />
+                <p className={`input-helper ${fieldErrors.projectedFutureRateIncrease ? 'input-helper--error' : ''}`}>{getHelperText('projectedFutureRateIncrease')}</p>
               </div>
             </div>
           </div>
@@ -889,8 +1072,23 @@ const Calculator = () => {
                 <p className="warning-label">Compare against a Sunrun plan</p>
                 <div className="sunrun-input-row">
                   <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
-                  <input id="sunrun-rate" type="number" step="0.01" value={sunRunMonthlyCost} onChange={(e) => setSunRunMonthlyCost(e.target.value)} placeholder="e.g. 185.00" />
+                  <input
+                    id="sunrun-rate"
+                    className={fieldErrors.sunRunMonthlyCost ? 'input-error' : ''}
+                    type="number"
+                    step="0.01"
+                    min={FIELD_CONSTRAINTS.sunRunMonthlyCost.min}
+                    max={FIELD_CONSTRAINTS.sunRunMonthlyCost.max}
+                    value={sunRunMonthlyCost}
+                    onChange={(e) => {
+                      const { value } = e.target
+                      setSunRunMonthlyCost(value)
+                      setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
+                    }}
+                    placeholder="e.g. 185.00"
+                  />
                 </div>
+                <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>{getHelperText('sunRunMonthlyCost')}</p>
                 <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
               </div>
 

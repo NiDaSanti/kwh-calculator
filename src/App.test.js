@@ -44,11 +44,19 @@ test('calculates projected monthly bill with no percentage change', async () => 
   await expectProjectedBillToBe('120.00')
 })
 
-test('calculates projected monthly bill with a 5% decrease', async () => {
+test('blocks projections when the rate decrease falls outside the supported range', async () => {
   render(<Calculator />)
 
   fillRequiredFields('-5')
   submitForm()
 
-  await expectProjectedBillToBe('114.00')
+  const [, , , rateChangeInput] = screen.getAllByRole('spinbutton')
+  const helper = screen.getByText('Use a rate increase between 0% and 50% to keep projections realistic.')
+
+  await waitFor(() => {
+    expect(rateChangeInput).toHaveClass('input-error')
+    expect(helper).toHaveClass('input-helper--error')
+  })
+
+  expect(screen.queryByText(/\$114\.00/)).not.toBeInTheDocument()
 })
