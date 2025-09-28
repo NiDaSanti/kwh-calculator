@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
@@ -217,7 +217,7 @@ const Calculator = () => {
     setProjectedBills({ sunrunBills: [], sceBills: [] })
   }
 
-  const chartData = xYearsLabel
+  const chartData = useMemo(() => xYearsLabel
     .map((year, index) => {
       const sunrunBill = projectedBills.sunrunBills[index]
       const sceBill = projectedBills.sceBills[index]
@@ -236,7 +236,7 @@ const Calculator = () => {
         Savings: Math.max(sceValue - sunrunValue, 0)
       }
     })
-    .filter(Boolean)
+    .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills])
 
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
@@ -286,9 +286,58 @@ const Calculator = () => {
     return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0, ...options })
   }
 
+  const animationTriggerKey = useMemo(() => [
+    rate ?? 'null',
+    projectedBills.sunrunBills.join(','),
+    projectedBills.sceBills.join(','),
+    chartData.length
+  ].join('|'), [rate, projectedBills.sunrunBills, projectedBills.sceBills, chartData.length])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const animatableElements = document.querySelectorAll('[data-animate]')
+
+    if (animatableElements.length === 0) {
+      return undefined
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+    if (prefersReducedMotion.matches) {
+      animatableElements.forEach((element) => {
+        element.classList.add('is-visible')
+      })
+
+      return undefined
+    }
+
+    const observer = new IntersectionObserver((entries, entryObserver) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          entryObserver.unobserve(entry.target)
+        }
+      })
+    }, {
+      threshold: 0.18,
+      rootMargin: '0px 0px -40px 0px'
+    })
+
+    animatableElements.forEach((element) => {
+      if (!element.classList.contains('is-visible')) {
+        observer.observe(element)
+      }
+    })
+
+    return () => observer.disconnect()
+  }, [animationTriggerKey])
+
   return (
     <section className="calculator-container">
-      <div className="calculator-header">
+      <div className="calculator-header animatable" data-animate>
         <span className="calculator-badge">Energy insights</span>
         <h1><span>Visualize</span> your SCE costs with clarity</h1>
         <p>Enter your recent charges and usage to calculate today&rsquo;s rate, then explore how your percentage-based projections stack up against a steady Sunrun plan.</p>
@@ -300,7 +349,7 @@ const Calculator = () => {
       </div>
 
       <div className="calculator-grid">
-        <form className="calculator-form surface-card" onSubmit={handleSubmit}>
+        <form className="calculator-form surface-card animatable" data-animate style={{ '--delay': '0.05s' }} onSubmit={handleSubmit}>
           <div className="form-header">
             <h3>Usage details</h3>
             <p>We&rsquo;ll use these figures to determine your current kWh rate.</p>
@@ -353,7 +402,7 @@ const Calculator = () => {
           </div>
         </form>
 
-        <div className="result-panel surface-card">
+        <div className="result-panel surface-card animatable" data-animate style={{ '--delay': '0.12s' }}>
           <div className="result-header">
             <h3>Bill snapshot</h3>
             <p>See how your current rate compares with upcoming adjustments.</p>
@@ -377,7 +426,7 @@ const Calculator = () => {
                 </List>
               </Box>
 
-              <div className="sunrun-input-container">
+              <div className="sunrun-input-container animatable" data-animate style={{ '--delay': '0.18s' }}>
                 <p className="warning-label">Compare against a Sunrun plan</p>
                 <div className="sunrun-input-row">
                   <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
@@ -387,13 +436,13 @@ const Calculator = () => {
               </div>
 
               <div className="insight-highlights">
-                <article className="insight-card accent-blue">
+                <article className="insight-card accent-blue animatable" data-animate style={{ '--delay': '0.22s' }}>
                   <span className="insight-label">Current rate</span>
                   <span className="insight-metric">${rate} <span className="insight-unit">/ kWh</span></span>
                   <p className="insight-caption">Reflects today&rsquo;s billing with your projected {scePecentage || 0}% annual increase.</p>
                 </article>
 
-                <article className="insight-card accent-emerald">
+                <article className="insight-card accent-emerald animatable" data-animate style={{ '--delay': '0.28s' }}>
                   <span className="insight-label">Monthly difference</span>
                   <span className="insight-metric">
                     {monthlyDifferenceDisplay !== null ? `$${formatCurrency(monthlyDifferenceDisplay, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
@@ -408,7 +457,7 @@ const Calculator = () => {
                   </p>
                 </article>
 
-                <article className="insight-card accent-amber">
+                <article className="insight-card accent-amber animatable" data-animate style={{ '--delay': '0.34s' }}>
                   <span className="insight-label">Long-term outlook</span>
                   <span className="insight-metric">
                     {tenYearSavings !== null ? `$${formatCurrency(tenYearSavings)}` : '--'}
@@ -422,7 +471,7 @@ const Calculator = () => {
                         : 'Add a Sunrun monthly cost to unlock decade-long comparisons.'}
                   </p>
                 </article>
-                <article className="insight-card accent-violet">
+                <article className="insight-card accent-violet animatable" data-animate style={{ '--delay': '0.4s' }}>
                   <span className="insight-label">Five-year cushion</span>
                   <span className="insight-metric">
                     {hasFiveYearSavings ? `$${formatCurrency(fiveYearSavings)}` : '--'}
@@ -436,7 +485,7 @@ const Calculator = () => {
                 </article>
               </div>
 
-              <div className="assumption-panel">
+              <div className="assumption-panel animatable" data-animate style={{ '--delay': '0.28s' }}>
                 <div className="assumption-panel__header">
                   <h4>Annual increase inputs</h4>
                   <p>Compare the percentages you entered for utility growth with Sunrun&rsquo;s assumed escalation.</p>
@@ -471,7 +520,7 @@ const Calculator = () => {
               </div>
 
               {(hasCumulativeTenYearSavings || hasPeakSavings) && (
-                <div className="savings-summary">
+                <div className="savings-summary animatable" data-animate style={{ '--delay': '0.32s' }}>
                   <div className="savings-summary__header">
                     <span className="savings-summary__badge"><TrendingUpIcon /> Savings storyline</span>
                     <h4>See how the gap evolves as rates shift</h4>
@@ -518,7 +567,7 @@ const Calculator = () => {
               )}
             </>
           ) : (
-            <div className="empty-state">
+            <div className="empty-state animatable" data-animate style={{ '--delay': '0.12s' }}>
               <h4>Ready when you are</h4>
               <p>Provide your charges and usage to unlock projections tailored to your household.</p>
             </div>
@@ -527,7 +576,7 @@ const Calculator = () => {
       </div>
 
       {rate !== null && chartData.length > 0 && (
-        <div className="chart-card surface-card">
+        <div className="chart-card surface-card animatable" data-animate style={{ '--delay': '0.18s' }}>
           <div className="chart-header">
             <h3>Projected monthly bills (next 10 years)</h3>
             <p>Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {SUNRUN_ESCALATION.toFixed(1)}% escalation.</p>
