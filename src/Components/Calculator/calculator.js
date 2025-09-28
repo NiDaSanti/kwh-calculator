@@ -3,12 +3,7 @@ import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
 import SolarPowerTwoToneIcon from '@mui/icons-material/SolarPowerTwoTone'
-import Divider from '@mui/material/Divider'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemText from '@mui/material/ListItemText'
 import PowerOutlinedIcon from '@mui/icons-material/PowerOutlined'
-import Box from '@mui/material/Box'
 import PercentIcon from '@mui/icons-material/Percent'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import InsightsIcon from '@mui/icons-material/Insights'
@@ -16,6 +11,7 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import DownloadIcon from '@mui/icons-material/Download'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import TableChartIcon from '@mui/icons-material/TableChart'
+import SavingsTwoToneIcon from '@mui/icons-material/SavingsTwoTone'
 import './styles.css'  // Importing the updated CSS file
 
 const xYearsLabel = [
@@ -71,19 +67,6 @@ const computeProjectedBills = (initialBill, sunRunStartMonthlyCost, firstYearInc
   return { sunrunBills, sceBills }
 }
 
-const listStyles = {
-  py: 0,
-  width: '100%',
-  borderRadius: 3,
-  border: '1px solid rgba(148, 163, 184, 0.35)',
-  backgroundColor: 'rgba(255,255,255,0.85)',
-  boxShadow: '0 18px 45px rgba(15, 23, 42, 0.12)',
-  backdropFilter: 'blur(14px)'
-}
-
-const listWrapperStyles = {
-  width: '100%'
-}
 const currencyFormatter = (value) => {
   if (value === 0) {
     return '$0'
@@ -343,6 +326,8 @@ const Calculator = () => {
     : 'Sunrun never surpasses the projected SCE costs within this projection window.'
 
   const chargesNumber = charges ? parseFloat(charges) : null
+  const usageNumber = usage ? parseFloat(usage) : null
+  const avgPerMonthCostNumber = avgPerMonthCost ? parseFloat(avgPerMonthCost) : null
   const annualUsageNumber = annualUsage ? parseFloat(annualUsage) : null
   const monthlyUsageKwh = Number.isFinite(annualUsageNumber) ? annualUsageNumber / 12 : null
   const currentAnnualBill = Number.isFinite(chargesNumber) ? chargesNumber * 12 : null
@@ -469,6 +454,8 @@ const Calculator = () => {
 
     return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0, ...options })
   }
+
+  const projectedIncreaseDisplay = formatPercentage(Number.parseFloat(scePecentage))
 
   const animationTriggerKey = useMemo(() => [
     rate ?? 'null',
@@ -762,58 +749,141 @@ const Calculator = () => {
 
           {rate !== null ? (
             <>
-              <Box sx={listWrapperStyles}>
-                <List sx={listStyles}>
-                  <ListItem className="result-item">
-                    <ListItemText primary={`The rate is ${rate} per kWh.`} secondary={`($ ${charges || 0} / ${usage || 0})`} />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText primary={`The average monthly cost is ${avgPerMonthCost}`} secondary={`(${annualUsage || 0} × $ ${rate} / 12)`} />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText primary={`The monthly bill with change is $ ${projectedMonthlyBill}`} secondary={`(${avgPerMonthCost} × (1 + ${scePecentage || 0} / 100))`} />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText
-                      primary={`Average monthly usage: ${monthlyUsageKwh !== null ? `${formatNumber(monthlyUsageKwh, { maximumFractionDigits: 0 })} kWh` : 'Add annual usage to unlock'}`}
-                      secondary={monthlyUsageKwh !== null ? `${formatNumber(annualUsageNumber, { maximumFractionDigits: 0 })} kWh / 12` : ''}
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText
-                      primary={`Current annual SCE spend: ${currentAnnualBill !== null ? `$${formatCurrency(currentAnnualBill)}` : '--'}`}
-                      secondary={currentAnnualBill !== null && chargesNumber !== null ? `(${formatCurrency(chargesNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × 12)` : 'Enter a monthly charge to calculate.'}
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText
-                      primary={`Projected annual SCE bill: ${projectedAnnualBill !== null ? `$${formatCurrency(projectedAnnualBill)}` : '--'}`}
-                      secondary={projectedAnnualBill !== null ? `(${formatCurrency(projectedMonthlyBillNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × 12)` : 'Provide projected increases to calculate.'}
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText
-                      primary={`Sunrun annual cost: ${sunrunAnnualCost !== null ? `$${formatCurrency(sunrunAnnualCost)}` : '--'}`}
-                      secondary={sunrunAnnualCost !== null ? `(${formatCurrency(sunrunMonthlyCostNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × 12)` : 'Enter a Sunrun monthly cost above.'}
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                  <ListItem className="result-item">
-                    <ListItemText
-                      primary={`Annual savings vs. Sunrun plan: ${projectedPlanAnnualSavings !== null ? `$${formatCurrencyAbsolute(projectedPlanAnnualSavings)}` : '--'}`}
-                      secondary={projectedPlanAnnualSavings !== null
-                        ? `${projectedPlanAnnualSavings >= 0 ? 'Potential savings' : 'Additional annual cost'} using your projections.`
+              <div className="bill-snapshot-grid animatable" data-animate style={{ '--delay': '0.16s' }}>
+                <article className="bill-card accent-sky">
+                  <span className="bill-card__icon"><BoltTwoToneIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Current rate</span>
+                    <span className="bill-card__value">
+                      ${rate}
+                      <span className="bill-card__unit">/ kWh</span>
+                    </span>
+                    <p className="bill-card__hint">
+                      {chargesNumber !== null && usageNumber !== null
+                        ? `Based on $${formatCurrency(chargesNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} for ${formatNumber(usageNumber, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kWh.`
+                        : 'Add monthly charges and usage to calculate a rate.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-lime">
+                  <span className="bill-card__icon"><AttachMoneyIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Average monthly cost</span>
+                    <span className="bill-card__value">
+                      {avgPerMonthCostNumber !== null
+                        ? `$${formatCurrency(avgPerMonthCostNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {annualUsageNumber !== null
+                        ? `Derived from ${formatNumber(annualUsageNumber, { maximumFractionDigits: 0 })} kWh each year.`
+                        : 'Add annual usage to reveal a monthly average.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-amber">
+                  <span className="bill-card__icon"><TrendingUpIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Projected monthly bill</span>
+                    <span className="bill-card__value">
+                      {projectedMonthlyBillNumber !== null
+                        ? `$${formatCurrency(projectedMonthlyBillNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {projectedMonthlyBillNumber !== null && projectedIncreaseDisplay !== '--'
+                        ? `Includes a ${projectedIncreaseDisplay} annual utility increase.`
+                        : 'Update the projected increase to see how future rates shift.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-indigo">
+                  <span className="bill-card__icon"><PowerOutlinedIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Average usage</span>
+                    <span className="bill-card__value">
+                      {monthlyUsageKwh !== null ? `${formatNumber(monthlyUsageKwh, { maximumFractionDigits: 0 })} kWh` : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {monthlyUsageKwh !== null
+                        ? `${formatNumber(annualUsageNumber, { maximumFractionDigits: 0 })} kWh each year ÷ 12 months.`
+                        : 'Add annual usage to unlock this insight.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-slate">
+                  <span className="bill-card__icon"><EventAvailableIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Current annual spend</span>
+                    <span className="bill-card__value">
+                      {currentAnnualBill !== null ? `$${formatCurrency(currentAnnualBill)}` : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {currentAnnualBill !== null && chargesNumber !== null
+                        ? `$${formatCurrency(chargesNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo today.`
+                        : 'Enter a monthly charge to calculate.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-blue">
+                  <span className="bill-card__icon"><InsightsIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Projected annual SCE bill</span>
+                    <span className="bill-card__value">
+                      {projectedAnnualBill !== null ? `$${formatCurrency(projectedAnnualBill)}` : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {projectedAnnualBill !== null && projectedMonthlyBillNumber !== null
+                        ? `Equivalent to $${formatCurrency(projectedMonthlyBillNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo.`
+                        : 'Provide projected increases to calculate.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article className="bill-card accent-emerald">
+                  <span className="bill-card__icon"><SolarPowerTwoToneIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Sunrun annual cost</span>
+                    <span className="bill-card__value">
+                      {sunrunAnnualCost !== null ? `$${formatCurrency(sunrunAnnualCost)}` : '--'}
+                    </span>
+                    <p className="bill-card__hint">
+                      {sunrunAnnualCost !== null && sunrunMonthlyCostNumber !== null
+                        ? `$${formatCurrency(sunrunMonthlyCostNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo plan.`
+                        : 'Enter a Sunrun monthly cost above.'}
+                    </p>
+                  </div>
+                </article>
+
+                <article
+                  className={`bill-card ${projectedPlanAnnualSavings !== null && projectedPlanAnnualSavings < 0 ? 'accent-rose is-negative' : 'accent-emerald'}`}
+                >
+                  <span className="bill-card__icon"><SavingsTwoToneIcon /></span>
+                  <div className="bill-card__content">
+                    <span className="bill-card__label">Difference vs. Sunrun</span>
+                    <span className="bill-card__value">
+                      {projectedPlanAnnualSavings !== null
+                        ? `$${formatCurrencyAbsolute(projectedPlanAnnualSavings, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                        : '--'}
+                      {projectedPlanAnnualSavings !== null && (
+                        <span className="bill-card__unit">/ yr {projectedPlanAnnualSavings >= 0 ? 'saved' : 'added cost'}</span>
+                      )}
+                    </span>
+                    <p className="bill-card__hint">
+                      {projectedPlanAnnualSavings !== null
+                        ? projectedPlanAnnualSavings >= 0
+                          ? 'Projected annual savings compared with the Sunrun plan.'
+                          : 'Projected annual cost above the Sunrun plan.'
                         : 'Provide Sunrun and projected utility costs to compare.'}
-                    />
-                  </ListItem>
-                </List>
-              </Box>
+                    </p>
+                  </div>
+                </article>
+              </div>
 
               <div className="sunrun-input-container animatable" data-animate style={{ '--delay': '0.18s' }}>
                 <p className="warning-label">Compare against a Sunrun plan</p>

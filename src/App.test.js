@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import Calculator from './Components/Calculator/calculator'
 
 const fillRequiredFields = (rateChange) => {
@@ -18,7 +18,11 @@ const submitForm = () => {
 
 const expectProjectedBillToBe = async (value) => {
   await waitFor(() => {
-    expect(screen.getByText(/the monthly bill with change is/i)).toHaveTextContent(`$ ${value}`)
+    const label = screen.getByText(/projected monthly bill/i)
+    const cardContent = label.closest('.bill-card__content')
+
+    expect(cardContent).not.toBeNull()
+    expect(within(cardContent).getByText(new RegExp(`\\$${value}`))).toBeInTheDocument()
   })
 }
 

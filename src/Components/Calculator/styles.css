@@ -361,16 +361,215 @@ button:hover::after {
   color: #64748b;
 }
 
-.result-item .MuiListItemText-primary {
-  font-weight: 600;
-  color: #0f172a;
-  font-size: 1.05rem;
+.bill-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
 }
 
-.result-item .MuiListItemText-secondary {
-  margin-top: 4px;
+@media (min-width: 768px) {
+  .bill-snapshot-grid {
+    gap: 20px;
+  }
+}
+
+.bill-card {
+  position: relative;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.97));
+  border: 1px solid var(--accent-border, rgba(148, 163, 184, 0.22));
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.bill-card::before {
+  content: '';
+  position: absolute;
+  inset: -60px -40px auto auto;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at center, var(--accent-glow, rgba(148, 163, 184, 0.18)), transparent 70%);
+  opacity: 0.85;
+  transform: rotate(18deg);
+  z-index: 0;
+}
+
+.bill-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 55px rgba(15, 23, 42, 0.16);
+  border-color: var(--accent-border-hover, rgba(148, 163, 184, 0.32));
+}
+
+.bill-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bill-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent-soft, rgba(148, 163, 184, 0.16));
+  color: var(--accent-color, #0f172a);
+  box-shadow: 0 12px 28px var(--accent-shadow, rgba(15, 23, 42, 0.12));
+}
+
+.bill-card__label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #64748b;
-  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.bill-card__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.bill-card__unit {
+  font-size: 0.95rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.bill-card__hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.bill-card.accent-sky {
+  --accent-color: #0284c7;
+  --accent-soft: rgba(56, 189, 248, 0.18);
+  --accent-border: rgba(14, 165, 233, 0.28);
+  --accent-border-hover: rgba(14, 165, 233, 0.45);
+  --accent-shadow: rgba(14, 165, 233, 0.25);
+  --accent-glow: rgba(56, 189, 248, 0.24);
+}
+
+.bill-card.accent-lime {
+  --accent-color: #3f6212;
+  --accent-soft: rgba(163, 230, 53, 0.22);
+  --accent-border: rgba(132, 204, 22, 0.28);
+  --accent-border-hover: rgba(132, 204, 22, 0.45);
+  --accent-shadow: rgba(132, 204, 22, 0.24);
+  --accent-glow: rgba(190, 242, 100, 0.28);
+}
+
+.bill-card.accent-amber {
+  --accent-color: #b45309;
+  --accent-soft: rgba(251, 191, 36, 0.24);
+  --accent-border: rgba(251, 191, 36, 0.32);
+  --accent-border-hover: rgba(251, 191, 36, 0.5);
+  --accent-shadow: rgba(251, 191, 36, 0.24);
+  --accent-glow: rgba(251, 191, 36, 0.28);
+}
+
+.bill-card.accent-indigo {
+  --accent-color: #4338ca;
+  --accent-soft: rgba(165, 180, 252, 0.24);
+  --accent-border: rgba(129, 140, 248, 0.32);
+  --accent-border-hover: rgba(129, 140, 248, 0.52);
+  --accent-shadow: rgba(129, 140, 248, 0.3);
+  --accent-glow: rgba(129, 140, 248, 0.26);
+}
+
+.bill-card.accent-slate {
+  --accent-color: #1f2937;
+  --accent-soft: rgba(148, 163, 184, 0.26);
+  --accent-border: rgba(148, 163, 184, 0.35);
+  --accent-border-hover: rgba(100, 116, 139, 0.45);
+  --accent-shadow: rgba(100, 116, 139, 0.22);
+  --accent-glow: rgba(148, 163, 184, 0.24);
+}
+
+.bill-card.accent-blue {
+  --accent-color: #1d4ed8;
+  --accent-soft: rgba(96, 165, 250, 0.22);
+  --accent-border: rgba(59, 130, 246, 0.32);
+  --accent-border-hover: rgba(37, 99, 235, 0.52);
+  --accent-shadow: rgba(59, 130, 246, 0.28);
+  --accent-glow: rgba(96, 165, 250, 0.28);
+}
+
+.bill-card.accent-emerald {
+  --accent-color: #047857;
+  --accent-soft: rgba(52, 211, 153, 0.22);
+  --accent-border: rgba(16, 185, 129, 0.35);
+  --accent-border-hover: rgba(16, 185, 129, 0.5);
+  --accent-shadow: rgba(16, 185, 129, 0.24);
+  --accent-glow: rgba(52, 211, 153, 0.24);
+}
+
+.bill-card.accent-rose {
+  --accent-color: #be123c;
+  --accent-soft: rgba(244, 63, 94, 0.2);
+  --accent-border: rgba(244, 63, 94, 0.32);
+  --accent-border-hover: rgba(225, 29, 72, 0.5);
+  --accent-shadow: rgba(244, 63, 94, 0.28);
+  --accent-glow: rgba(244, 63, 94, 0.26);
+}
+
+.bill-card.accent-sky .bill-card__value {
+  color: #0369a1;
+}
+
+.bill-card.accent-lime .bill-card__value {
+  color: #3f6212;
+}
+
+.bill-card.accent-amber .bill-card__value {
+  color: #b45309;
+}
+
+.bill-card.accent-indigo .bill-card__value {
+  color: #3730a3;
+}
+
+.bill-card.accent-slate .bill-card__value {
+  color: #1f2937;
+}
+
+.bill-card.accent-blue .bill-card__value {
+  color: #1d4ed8;
+}
+
+.bill-card.accent-emerald .bill-card__value {
+  color: #047857;
+}
+
+.bill-card.accent-rose .bill-card__value,
+.bill-card.is-negative .bill-card__value {
+  color: #be123c;
+}
+
+@media (max-width: 640px) {
+  .bill-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .bill-card__value {
+    font-size: 1.35rem;
+  }
 }
 
 .sunrun-input-container {
