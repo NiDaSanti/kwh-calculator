@@ -9,6 +9,7 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  background-attachment: fixed;
 }
 
 body::before,
@@ -49,4 +50,16 @@ body::after {
   border-radius: 48px;
   filter: blur(12px);
   z-index: -1;
+}
+
+.app-shell::after {
+  content: '';
+  position: absolute;
+  inset: 8% 10%;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 0);
+  background-size: 32px 32px;
+  opacity: 0.45;
+  z-index: -2;
+  mask: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent 80%);
+  -webkit-mask: linear-gradient(180deg, rgba(255, 255, 255, 0.85), transparent 80%);
 }
