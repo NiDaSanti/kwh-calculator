@@ -80,21 +80,15 @@ const computeProjectedBills = (initialBill, sunRunStartMonthlyCost, firstYearInc
   const firstYearFactor = 1 + safeFirstYearIncrease / 100
   const ongoingFactor = 1 + safeOngoingIncrease / 100
 
-  const sunrunBills = []
-  const sceBills = []
-
-  let currentSunrunBill = sunRunStartMonthlyCost * sunrunIncrease
-  let currentSceBill = initialBill * firstYearFactor
-
-  sunrunBills.push(currentSunrunBill)
-  sceBills.push(currentSceBill)
+  const sunrunBills = [sunRunStartMonthlyCost]
+  const sceBills = [initialBill * firstYearFactor]
 
   for (let i = 1; i < totalYears; i++) {
-    currentSunrunBill *= sunrunIncrease
-    currentSceBill *= ongoingFactor
+    const nextSunrunBill = sunrunBills[i - 1] * sunrunIncrease
+    const nextSceBill = sceBills[i - 1] * ongoingFactor
 
-    sunrunBills.push(currentSunrunBill)
-    sceBills.push(currentSceBill)
+    sunrunBills.push(nextSunrunBill)
+    sceBills.push(nextSceBill)
   }
 
   return { sunrunBills, sceBills }
