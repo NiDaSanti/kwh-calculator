@@ -393,31 +393,91 @@ const Calculator = () => {
       })
   }, [summaryText])
 
-  const handleDownloadCSV = useCallback(() => {
+  const handleDownloadSummary = useCallback(() => {
     if (!hasYearlyBreakdown || typeof document === 'undefined') {
       return
     }
 
-    const headers = ['Year', 'SCE annual bill', 'Sunrun annual bill', 'Annual difference', 'Cumulative savings']
-    const rows = yearlyBreakdown.map((item) => [
-      item.year,
-      item.sceAnnual.toFixed(2),
-      item.sunrunAnnual.toFixed(2),
-      item.diffAnnual.toFixed(2),
-      item.cumulativeSavings.toFixed(2)
-    ])
+    const formatDollars = (value) => {
+      if (!Number.isFinite(value)) {
+        return '--'
+      }
 
-    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const absolute = Math.abs(value).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+
+      return `${value < 0 ? '-' : ''}$${absolute}`
+    }
+
+    const lines = [
+      'Homeowner energy projection',
+      `Generated on: ${new Date().toLocaleDateString()}`,
+      ''
+    ]
+
+    if (rate !== null) {
+      lines.push(`Current kWh rate: ${formatDollars(parseFloat(rate))}`)
+    }
+
+    if (projectedMonthlyBillNumber !== null) {
+      lines.push(`Projected monthly SCE bill: ${formatDollars(projectedMonthlyBillNumber)}`)
+    }
+
+    if (sunrunMonthlyCostNumber !== null) {
+      lines.push(`Sunrun monthly cost: ${formatDollars(sunrunMonthlyCostNumber)}`)
+    }
+
+    if (monthlyDifferenceDisplay !== null) {
+      lines.push(`Monthly difference: ${formatDollars(monthlyDifferenceDisplay)} ${monthlyDifferenceLabel}`)
+    }
+
+    lines.push('')
+
+    if (hasYearlyBreakdown) {
+      lines.push(`Ten-year total SCE spend: ${formatDollars(totalSceSpend)}`)
+      lines.push(`Ten-year total Sunrun spend: ${formatDollars(totalSunrunSpend)}`)
+      lines.push(`Ten-year total difference: ${formatDollars(Math.abs(totalSavings))} ${hasPositiveTotalSavings ? 'saved' : 'additional cost'}`)
+      lines.push(
+        hasBreakEven
+          ? `Projected break-even year: ${breakEvenYear}`
+          : 'Break-even not reached within the projection window.'
+      )
+    }
+
+    lines.push('', 'Year-by-year outlook:')
+
+    yearlyBreakdown.forEach((item) => {
+      lines.push(
+        `${item.year}: SCE ${formatDollars(item.sceAnnual)}, Sunrun ${formatDollars(item.sunrunAnnual)}, Annual difference ${formatDollars(item.diffAnnual)}, Cumulative savings ${formatDollars(item.cumulativeSavings)}`
+      )
+    })
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', 'kwh-projection.csv')
+    link.setAttribute('download', 'homeowner-energy-summary.txt')
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-  }, [hasYearlyBreakdown, yearlyBreakdown])
+  }, [
+    breakEvenYear,
+    hasBreakEven,
+    hasPositiveTotalSavings,
+    hasYearlyBreakdown,
+    monthlyDifferenceDisplay,
+    monthlyDifferenceLabel,
+    projectedMonthlyBillNumber,
+    rate,
+    sunrunMonthlyCostNumber,
+    totalSavings,
+    totalSceSpend,
+    totalSunrunSpend,
+    yearlyBreakdown
+  ])
 
   useEffect(() => {
     if (!copyStatus) {
@@ -494,45 +554,61 @@ const Calculator = () => {
             <p>We&rsquo;ll use these figures to determine your current kWh rate.</p>
           </div>
 
-          <div className="form-group">
-            <label><AttachMoneyIcon /> Monthly Charges</label>
-            <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} placeholder="e.g. 225.60" required />
+          <div className="form-section">
+            <div className="form-section__header">
+              <span>Current usage snapshot</span>
+              <p>Capture a recent bill to anchor today&rsquo;s rate.</p>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label><AttachMoneyIcon /> Monthly Charges</label>
+                <input type="number" step="0.01" value={charges} onChange={(e) => setCharges(e.target.value)} placeholder="e.g. 225.60" required />
+              </div>
+
+              <div className="form-group">
+                <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
+                <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} placeholder="e.g. 540" required />
+              </div>
+
+              <div className="form-group full-width">
+                <label><BoltTwoToneIcon /> Annual kWh Usage</label>
+                <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} placeholder="e.g. 6480" required />
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label><PowerOutlinedIcon /> Monthly kWh Usage</label>
-            <input type="number" value={usage} onChange={(e) => setUsage(e.target.value)} placeholder="e.g. 540" required />
-          </div>
+          <div className="form-section">
+            <div className="form-section__header">
+              <span>Future assumptions</span>
+              <p>Estimate how utility rates might evolve over time.</p>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label><PercentIcon /> Rate change percentage</label>
+                <input
+                  type="number"
+                  value={scePecentage}
+                  onChange={(e) => {
+                    setScePecentage(e.target.value)
+                  }}
+                  placeholder="Projected annual increase"
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label><BoltTwoToneIcon /> Annual kWh Usage</label>
-            <input type="number" step="0.01" value={annualUsage} onChange={(e) => setAnnualUsage(e.target.value)} placeholder="e.g. 6480" required />
-          </div>
-
-          <div className="form-group">
-            <label><PercentIcon /> Rate change percentage</label>
-            <input
-              type="number"
-              value={scePecentage}
-              onChange={(e) => {
-                setScePecentage(e.target.value)
-              }}
-              placeholder="Projected annual increase"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label><PercentIcon /> Minimal rate percentage</label>
-            <input
-              type="number"
-              value={projectedFutureRateIncrease}
-              onChange={(e) => {
-                setProjectedFutureRateIncrease(e.target.value)
-              }}
-              placeholder="Baseline annual increase"
-              required
-            />
+              <div className="form-group">
+                <label><PercentIcon /> Minimal rate percentage</label>
+                <input
+                  type="number"
+                  value={projectedFutureRateIncrease}
+                  onChange={(e) => {
+                    setProjectedFutureRateIncrease(e.target.value)
+                  }}
+                  placeholder="Baseline annual increase"
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           <div className="button-group">
@@ -748,8 +824,8 @@ const Calculator = () => {
                     <button type="button" className="utility-button" onClick={handleCopySummary}>
                       <ContentCopyIcon /> Copy quick summary
                     </button>
-                    <button type="button" className="utility-button secondary" onClick={handleDownloadCSV}>
-                      <DownloadIcon /> Download CSV
+                    <button type="button" className="utility-button secondary" onClick={handleDownloadSummary}>
+                      <DownloadIcon /> Download homeowner summary
                     </button>
                   </div>
                   {copyStatus && <span className="projection-actions__status">{copyStatus}</span>}
