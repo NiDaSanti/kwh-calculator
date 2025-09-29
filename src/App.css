@@ -42,40 +42,40 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --app-text-color: #f6eee4;
-  --app-background: linear-gradient(160deg, #1c1814 0%, #221c17 46%, #2a221b 100%);
+  --app-text-color: #f8f2ea;
+  --app-background: linear-gradient(160deg, #221b16 0%, #2a221c 46%, #322921 100%);
   --app-blob-primary: radial-gradient(
     circle at center,
-    rgba(231, 111, 81, 0.26) 0%,
-    rgba(231, 111, 81, 0.08) 65%,
+    rgba(231, 111, 81, 0.32) 0%,
+    rgba(231, 111, 81, 0.12) 65%,
     transparent 75%
   );
   --app-blob-secondary: radial-gradient(
     circle at center,
-    rgba(64, 181, 164, 0.28) 0%,
-    rgba(64, 181, 164, 0.1) 65%,
+    rgba(64, 181, 164, 0.32) 0%,
+    rgba(64, 181, 164, 0.14) 65%,
     transparent 75%
   );
-  --app-shell-highlight: linear-gradient(120deg, rgba(60, 48, 40, 0.6), transparent 60%);
-  --app-shell-grid: radial-gradient(rgba(78, 63, 53, 0.45) 1px, transparent 0);
-  --app-switcher-bg: rgba(36, 30, 26, 0.88);
-  --app-switcher-border: rgba(124, 96, 72, 0.55);
-  --app-switcher-shadow: rgba(18, 12, 8, 0.36);
-  --app-switcher-hover-shadow: rgba(18, 12, 8, 0.48);
-  --app-switcher-hover-border: rgba(231, 111, 81, 0.42);
-  --app-switcher-color: #f6eee4;
-  --app-switcher-focus-outline: rgba(64, 181, 164, 0.6);
+  --app-shell-highlight: linear-gradient(120deg, rgba(72, 56, 46, 0.6), transparent 60%);
+  --app-shell-grid: radial-gradient(rgba(92, 74, 62, 0.48) 1px, transparent 0);
+  --app-switcher-bg: rgba(42, 34, 30, 0.9);
+  --app-switcher-border: rgba(148, 118, 92, 0.55);
+  --app-switcher-shadow: rgba(12, 8, 6, 0.4);
+  --app-switcher-hover-shadow: rgba(12, 8, 6, 0.52);
+  --app-switcher-hover-border: rgba(231, 111, 81, 0.48);
+  --app-switcher-color: #f8f2ea;
+  --app-switcher-focus-outline: rgba(82, 204, 186, 0.65);
   --app-switcher-active-text: #fdf8f4;
   --app-switcher-active-gradient: linear-gradient(
     135deg,
-    rgba(242, 132, 92, 0.95),
-    rgba(64, 181, 164, 0.9)
+    rgba(242, 132, 92, 0.98),
+    rgba(73, 197, 179, 0.92)
   );
-  --app-theme-toggle-bg: rgba(36, 30, 26, 0.78);
-  --app-theme-toggle-border: rgba(124, 96, 72, 0.62);
-  --app-theme-toggle-shadow: rgba(8, 6, 4, 0.6);
-  --app-theme-toggle-color: #f6eee4;
-  --app-theme-toggle-hover-bg: rgba(52, 42, 36, 0.94);
+  --app-theme-toggle-bg: rgba(44, 36, 32, 0.82);
+  --app-theme-toggle-border: rgba(148, 118, 92, 0.65);
+  --app-theme-toggle-shadow: rgba(8, 6, 4, 0.64);
+  --app-theme-toggle-color: #f8f2ea;
+  --app-theme-toggle-hover-bg: rgba(60, 48, 40, 0.96);
 }
 
 body {
