@@ -23,6 +23,7 @@ import InsightsIcon from '@mui/icons-material/Insights'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import DownloadIcon from '@mui/icons-material/Download'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import LinkIcon from '@mui/icons-material/Link'
 import TableChartIcon from '@mui/icons-material/TableChart'
 import SavingsTwoToneIcon from '@mui/icons-material/SavingsTwoTone'
 import './styles.css'  // Importing the updated CSS file
@@ -32,6 +33,17 @@ const MIN_PROJECTION_YEARS = 5
 const MAX_PROJECTION_YEARS = 20
 const DEFAULT_SUNRUN_ESCALATION = 3.5
 const UTILITY_DATA_KEY = 'Utility'
+const CALCULATOR_QUERY_KEY = 'calculator'
+const SHAREABLE_FIELD_KEYS = [
+  'charges',
+  'usage',
+  'annualUsage',
+  'scePecentage',
+  'projectedFutureRateIncrease',
+  'sunRunMonthlyCost',
+  'sunrunEscalation',
+  'projectionYears'
+]
 
 const DEFAULT_UTILITY_COLORS = {
   gradientStops: [
@@ -95,6 +107,94 @@ const generateYearLabels = (startYear, count) => {
   const safeCount = Number.isFinite(count) && count > 0 ? Math.floor(count) : 0
 
   return Array.from({ length: safeCount }, (_, index) => String(safeStartYear + index))
+}
+
+const clampProjectionYears = (value) => {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_PROJECTION_YEARS
+  }
+
+  return Math.min(Math.max(Math.round(value), MIN_PROJECTION_YEARS), MAX_PROJECTION_YEARS)
+}
+
+const coerceToString = (value) => {
+  if (value == null) {
+    return ''
+  }
+
+  return String(value)
+}
+
+const loadCalculatorParamsFromSearch = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  const raw = params.get(CALCULATOR_QUERY_KEY)
+
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw)
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null
+    }
+
+    const result = {}
+
+    SHAREABLE_FIELD_KEYS.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+        if (key === 'projectionYears') {
+          const numericValue = Number(parsed[key])
+
+          if (Number.isFinite(numericValue)) {
+            result.projectionYears = clampProjectionYears(numericValue)
+          }
+        } else {
+          result[key] = coerceToString(parsed[key])
+        }
+      }
+    })
+
+    return Object.keys(result).length > 0 ? result : null
+  } catch (error) {
+    return null
+  }
+}
+
+const buildShareableCalculatorParams = (state, defaults) => {
+  const nextParams = {
+    charges: coerceToString(state.charges),
+    usage: coerceToString(state.usage),
+    annualUsage: coerceToString(state.annualUsage),
+    scePecentage: coerceToString(state.scePecentage),
+    projectedFutureRateIncrease: coerceToString(state.projectedFutureRateIncrease),
+    sunRunMonthlyCost: coerceToString(state.sunRunMonthlyCost),
+    sunrunEscalation: coerceToString(state.sunrunEscalation),
+    projectionYears: clampProjectionYears(state.projectionYears)
+  }
+
+  const defaultProjectionIncrease = defaults?.projectedIncrease ?? ''
+  const defaultBaselineIncrease = defaults?.baselineIncrease ?? ''
+  const defaultSunrunEscalation = defaults?.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString()
+
+  const hasMeaningfulData =
+    nextParams.charges !== '' ||
+    nextParams.usage !== '' ||
+    nextParams.annualUsage !== '' ||
+    nextParams.sunRunMonthlyCost !== '' ||
+    (nextParams.scePecentage !== '' && nextParams.scePecentage !== coerceToString(defaultProjectionIncrease)) ||
+    (nextParams.projectedFutureRateIncrease !== '' &&
+      nextParams.projectedFutureRateIncrease !== coerceToString(defaultBaselineIncrease)) ||
+    (nextParams.sunrunEscalation !== '' &&
+      nextParams.sunrunEscalation !== coerceToString(defaultSunrunEscalation)) ||
+    nextParams.projectionYears !== DEFAULT_PROJECTION_YEARS
+
+  return hasMeaningfulData ? nextParams : null
 }
 
 const FIELD_CONSTRAINTS = {
@@ -228,16 +328,28 @@ const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) =>
 }
 
 const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id }) => {
-  const [charges, setCharges] = useState('')
-  const [usage, setUsage] = useState('')
-  const [annualUsage, setAnnualUsage] = useState('')
-  const [scePecentage, setScePecentage] = useState('')
+  const resolvedInitialUtility = resolveUtilityId(initialUtility)
+  const initialUtilityConfig = UTILITY_CONFIGS[resolvedInitialUtility] ?? UTILITY_CONFIGS.sce
+  const initialCalculatorParams = useMemo(() => loadCalculatorParamsFromSearch(), [])
+  const [charges, setCharges] = useState(() => initialCalculatorParams?.charges ?? '')
+  const [usage, setUsage] = useState(() => initialCalculatorParams?.usage ?? '')
+  const [annualUsage, setAnnualUsage] = useState(() => initialCalculatorParams?.annualUsage ?? '')
+  const [scePecentage, setScePecentage] = useState(() =>
+    initialCalculatorParams?.scePecentage ?? initialUtilityConfig.defaults.projectedIncrease
+  )
   const [projectedMonthlyBill, setProjectedMonthlyBill] = useState(null)
-  const [sunRunMonthlyCost, setSunRunMonthlyCost] = useState('')
-  const [sunrunEscalation, setSunrunEscalation] = useState(DEFAULT_SUNRUN_ESCALATION.toString())
-  const [selectedUtility, setSelectedUtility] = useState(() => resolveUtilityId(initialUtility))
+  const [sunRunMonthlyCost, setSunRunMonthlyCost] = useState(() =>
+    initialCalculatorParams?.sunRunMonthlyCost ?? ''
+  )
+  const [sunrunEscalation, setSunrunEscalation] = useState(() =>
+    initialCalculatorParams?.sunrunEscalation ??
+    (initialUtilityConfig.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
+  )
+  const [selectedUtility, setSelectedUtility] = useState(() => resolvedInitialUtility)
   const [rate, setRate] = useState(null)
-  const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
+  const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState(() =>
+    initialCalculatorParams?.projectedFutureRateIncrease ?? initialUtilityConfig.defaults.baselineIncrease
+  )
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') {
@@ -249,10 +361,13 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [copyStatus, setCopyStatus] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [sunrunProjectionStatus, setSunrunProjectionStatus] = useState(null)
-  const [projectionYears, setProjectionYears] = useState(DEFAULT_PROJECTION_YEARS)
+  const [projectionYears, setProjectionYears] = useState(() =>
+    initialCalculatorParams?.projectionYears ?? DEFAULT_PROJECTION_YEARS
+  )
   const [brushRange, setBrushRange] = useState(null)
   const [brushKey, setBrushKey] = useState(0)
   const previousUtilityRef = useRef(null)
+  const lastSerializedCalculatorParamsRef = useRef(null)
   const utilityConfig = UTILITY_CONFIGS[selectedUtility] ?? UTILITY_CONFIGS.sce
   const utilityShortName = utilityConfig.shortName
   const utilityDisplayName = utilityConfig.displayName
@@ -291,7 +406,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       return
     }
 
-    if (previousUtilityRef.current !== selectedUtility) {
+    if (previousUtilityRef.current !== null && previousUtilityRef.current !== selectedUtility) {
       setScePecentage(config.defaults.projectedIncrease)
       setProjectedFutureRateIncrease(config.defaults.baselineIncrease)
       setSunrunEscalation(config.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
@@ -299,6 +414,73 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
     previousUtilityRef.current = selectedUtility
   }, [selectedUtility])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const defaults = UTILITY_CONFIGS[selectedUtility]?.defaults ?? initialUtilityConfig.defaults
+      const shareableParams = buildShareableCalculatorParams(
+        {
+          charges,
+          usage,
+          annualUsage,
+          scePecentage,
+          projectedFutureRateIncrease,
+          sunRunMonthlyCost,
+          sunrunEscalation,
+          projectionYears
+        },
+        defaults
+      )
+
+      const serialized = shareableParams ? JSON.stringify(shareableParams) : null
+
+      if (serialized === lastSerializedCalculatorParamsRef.current) {
+        return
+      }
+
+      const params = new URLSearchParams(window.location.search)
+
+      if (shareableParams) {
+        params.set(CALCULATOR_QUERY_KEY, serialized)
+      } else {
+        params.delete(CALCULATOR_QUERY_KEY)
+      }
+
+      const currentSearch = window.location.search.startsWith('?')
+        ? window.location.search.slice(1)
+        : window.location.search
+      const nextSearch = params.toString()
+
+      if (nextSearch === currentSearch) {
+        lastSerializedCalculatorParamsRef.current = serialized
+        return
+      }
+
+      const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`
+
+      window.history.replaceState(null, '', nextUrl)
+      lastSerializedCalculatorParamsRef.current = serialized
+    }, 400)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    annualUsage,
+    charges,
+    initialUtilityConfig.defaults,
+    projectedFutureRateIncrease,
+    projectionYears,
+    scePecentage,
+    selectedUtility,
+    sunRunMonthlyCost,
+    sunrunEscalation,
+    usage
+  ])
 
   const setFieldError = useCallback((name, message) => {
     setFieldErrors((prev) => {
@@ -871,6 +1053,28 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
         setCopyStatus('Copy failed')
       })
   }, [summaryText])
+
+  const handleCopyShareLink = useCallback(() => {
+    if (typeof window === 'undefined') {
+      setCopyStatus('Clipboard unavailable')
+      return
+    }
+
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      setCopyStatus('Clipboard unavailable')
+      return
+    }
+
+    const shareUrl = window.location.href
+
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        setCopyStatus('Link copied to clipboard')
+      })
+      .catch(() => {
+        setCopyStatus('Copy failed')
+      })
+  }, [])
 
   const handleDownloadSummary = useCallback(() => {
     if (!hasYearlyBreakdown || typeof document === 'undefined') {
@@ -1713,6 +1917,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   <div className="projection-actions__buttons">
                     <button type="button" className="utility-button" onClick={handleCopySummary}>
                       <ContentCopyIcon /> Copy quick summary
+                    </button>
+                    <button type="button" className="utility-button secondary" onClick={handleCopyShareLink}>
+                      <LinkIcon /> Copy share link
                     </button>
                     <button type="button" className="utility-button secondary" onClick={handleDownloadSummary}>
                       <DownloadIcon /> Download homeowner summary
