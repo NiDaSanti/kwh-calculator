@@ -1068,7 +1068,7 @@ button:hover::after {
 
 .yearly-breakdown__table {
   width: 100%;
-  min-width: 560px;
+  min-width: 940px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -1116,6 +1116,38 @@ button:hover::after {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.8;
+}
+
+.yearly-breakdown__rate-cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.yearly-breakdown__rate-unit {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+
+.yearly-breakdown__rate-change {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(96, 74, 54, 0.75);
+}
+
+.yearly-breakdown__rate-change[data-direction='up'] {
+  color: #b07a5b;
+}
+
+.yearly-breakdown__rate-change[data-direction='down'] {
+  color: #2f7f68;
 }
 
 .chart-card:hover {
@@ -1703,6 +1735,54 @@ button:hover::after {
 .chart-tooltip__item strong {
   font-size: 1rem;
   letter-spacing: 0.02em;
+}
+
+.chart-tooltip__rate-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(207, 177, 148, 0.35);
+}
+
+.chart-tooltip__rate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  font-size: 0.9rem;
+}
+
+.chart-tooltip__rate-row span:first-child {
+  font-weight: 600;
+  color: rgba(96, 74, 54, 0.8);
+}
+
+.chart-tooltip__rate-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.chart-tooltip__rate-meta strong {
+  font-size: 0.95rem;
+}
+
+.chart-tooltip__rate-change {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(96, 74, 54, 0.65);
+}
+
+.chart-tooltip__rate-change[data-direction='up'] {
+  color: #b07a5b;
+}
+
+.chart-tooltip__rate-change[data-direction='down'] {
+  color: #2f7f68;
 }
 
 .chart-tooltip__savings {

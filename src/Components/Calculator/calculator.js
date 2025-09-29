@@ -331,6 +331,61 @@ const currencyFormatter = (value) => {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
+const formatRateDisplay = (value) => {
+  if (value === null || Number.isNaN(value)) {
+    return '--'
+  }
+
+  return `$${value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
+}
+
+const formatPercentageDeltaDisplay = (value) => {
+  if (value === null || Number.isNaN(value)) {
+    return '--'
+  }
+
+  const prefix = value > 0 ? '+' : ''
+
+  return `${prefix}${value.toFixed(1)}%`
+}
+
+const getTrendDirection = (value) => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined
+  }
+
+  return value >= 0 ? 'up' : 'down'
+}
+
+const formatYoYChangeDisplay = (value) => {
+  const formatted = formatPercentageDeltaDisplay(value)
+
+  return formatted === '--' ? '—' : formatted
+}
+
+const buildRateCallout = (entry, rateKey, changeKey) => {
+  if (!entry) {
+    return null
+  }
+
+  const rateValue = entry[rateKey]
+
+  if (typeof rateValue !== 'number' || !Number.isFinite(rateValue)) {
+    return null
+  }
+
+  const changeValue = entry[changeKey]
+  const changeDisplay =
+    typeof changeValue === 'number' && Number.isFinite(changeValue)
+      ? ` (${formatPercentageDeltaDisplay(changeValue)} YoY)`
+      : ''
+
+  return `${entry.year}: ${formatRateDisplay(rateValue)} / kWh${changeDisplay}`
+}
+
 const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) => {
   if (!active || !payload || payload.length === 0) {
     return null
@@ -339,6 +394,16 @@ const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) =>
   const sunrun = payload.find((item) => item.dataKey === 'SunRun')
   const utility = payload.find((item) => item.dataKey === UTILITY_DATA_KEY)
   const savings = payload.find((item) => item.dataKey === 'Savings')
+  const dataPoint = payload[0]?.payload ?? {}
+  const {
+    sunrunRate,
+    utilityRate,
+    sunrunRateChange,
+    utilityRateChange
+  } = dataPoint
+
+  const hasUtilityRate = typeof utilityRate === 'number' && Number.isFinite(utilityRate)
+  const hasSunrunRate = typeof sunrunRate === 'number' && Number.isFinite(sunrunRate)
 
   const getAccentColor = (item) => {
     if (!item) {
@@ -361,6 +426,42 @@ const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) =>
         <div className="chart-tooltip__item" style={{ '--color': getAccentColor(utility) }}>
           <span>{utilityLabel}</span>
           <strong>${utility.value.toFixed(2)}</strong>
+        </div>
+      )}
+      {(hasUtilityRate || hasSunrunRate) && (
+        <div className="chart-tooltip__rate-group">
+          {hasUtilityRate && (
+            <div className="chart-tooltip__rate-row">
+              <span>{utilityLabel} rate</span>
+              <div className="chart-tooltip__rate-meta">
+                <strong>{`${formatRateDisplay(utilityRate)} / kWh`}</strong>
+                <span
+                  className="chart-tooltip__rate-change"
+                  data-direction={getTrendDirection(utilityRateChange)}
+                >
+                  {typeof utilityRateChange === 'number' && Number.isFinite(utilityRateChange)
+                    ? `${formatPercentageDeltaDisplay(utilityRateChange)} YoY`
+                    : '—'}
+                </span>
+              </div>
+            </div>
+          )}
+          {hasSunrunRate && (
+            <div className="chart-tooltip__rate-row">
+              <span>Sunrun rate</span>
+              <div className="chart-tooltip__rate-meta">
+                <strong>{`${formatRateDisplay(sunrunRate)} / kWh`}</strong>
+                <span
+                  className="chart-tooltip__rate-change"
+                  data-direction={getTrendDirection(sunrunRateChange)}
+                >
+                  {typeof sunrunRateChange === 'number' && Number.isFinite(sunrunRateChange)
+                    ? `${formatPercentageDeltaDisplay(sunrunRateChange)} YoY`
+                    : '—'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {savings?.value != null && (
@@ -890,6 +991,15 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     }, [])
   }, [chartData])
 
+  const nextYearBreakdown = yearlyBreakdown.length > 1 ? yearlyBreakdown[1] : null
+  const finalBreakdownEntry = yearlyBreakdown.length > 0 ? yearlyBreakdown[yearlyBreakdown.length - 1] : null
+  const finalUtilityRate = finalBreakdownEntry?.utilityRate ?? null
+  const finalSunrunRate = finalBreakdownEntry?.sunrunRate ?? null
+  const finalUtilityRateChange = finalBreakdownEntry?.utilityRateChange ?? null
+  const finalSunrunRateChange = finalBreakdownEntry?.sunrunRateChange ?? null
+
+  const currentRateNumber = rate !== null ? parseFloat(rate) : null
+
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
   const sunrunEscalationNumber = sunrunEscalation ? parseFloat(sunrunEscalation) : null
@@ -948,6 +1058,58 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const totalDifferenceLabel = hasYearlyBreakdown
     ? `${projectionLabel} ${hasPositiveTotalSavings ? 'saved total' : 'additional cost'}`.trim()
     : ''
+
+  const baseRateCaption = `Uses today’s bill with your projected ${scePecentage || 0}% annual increase.`
+  const utilityRateNotes = []
+  const sunrunRateNotes = []
+
+  const nextUtilityCallout = buildRateCallout(nextYearBreakdown, 'utilityRate', 'utilityRateChange')
+  const finalUtilityCallout =
+    finalBreakdownEntry && finalBreakdownEntry.year !== nextYearBreakdown?.year
+      ? buildRateCallout(finalBreakdownEntry, 'utilityRate', 'utilityRateChange')
+      : null
+
+  if (nextUtilityCallout) {
+    utilityRateNotes.push(nextUtilityCallout)
+  }
+
+  if (finalUtilityCallout) {
+    utilityRateNotes.push(finalUtilityCallout)
+  }
+
+  const nextSunrunCallout = buildRateCallout(nextYearBreakdown, 'sunrunRate', 'sunrunRateChange')
+  const finalSunrunCallout =
+    finalBreakdownEntry && finalBreakdownEntry.year !== nextYearBreakdown?.year
+      ? buildRateCallout(finalBreakdownEntry, 'sunrunRate', 'sunrunRateChange')
+      : null
+
+  if (nextSunrunCallout) {
+    sunrunRateNotes.push(nextSunrunCallout)
+  }
+
+  if (finalSunrunCallout) {
+    sunrunRateNotes.push(finalSunrunCallout)
+  }
+
+  const rateInsightCaption =
+    utilityRateNotes.length === 0 && sunrunRateNotes.length === 0
+      ? baseRateCaption
+      : [
+          utilityRateNotes.length > 0 ? `${utilityShortName}: ${utilityRateNotes.join(' → ')}` : null,
+          sunrunRateNotes.length > 0 ? `Sunrun: ${sunrunRateNotes.join(' → ')}` : null
+        ]
+          .filter(Boolean)
+          .join(' • ')
+
+  const currentRateDisplay =
+    currentRateNumber !== null && Number.isFinite(currentRateNumber)
+      ? formatRateDisplay(currentRateNumber)
+      : '--'
+
+  const totalUtilityRateDisplay = formatRateDisplay(finalUtilityRate)
+  const totalSunrunRateDisplay = formatRateDisplay(finalSunrunRate)
+  const totalUtilityRateChangeDisplay = formatYoYChangeDisplay(finalUtilityRateChange)
+  const totalSunrunRateChangeDisplay = formatYoYChangeDisplay(finalSunrunRateChange)
   const breakEvenDescription = hasBreakEven
     ? `Savings overtake ${utilityShortName} in ${breakEvenYear} based on your current assumptions.`
     : `Sunrun never surpasses the projected ${utilityShortName} costs within this projection window.`
@@ -1109,6 +1271,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
     return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0, ...options })
   }
+
 
   const projectedIncreaseDisplay = formatPercentage(Number.parseFloat(scePecentage))
 
@@ -1750,8 +1913,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
               <div className="insight-highlights">
                 <article className="insight-card accent-blue animatable" data-animate style={{ '--delay': '0.22s' }}>
                   <span className="insight-label">Current rate</span>
-                  <span className="insight-metric">${rate} <span className="insight-unit">/ kWh</span></span>
-                  <p className="insight-caption">Uses today&rsquo;s bill with your projected {scePecentage || 0}% annual increase.</p>
+                  <span className="insight-metric">
+                    {currentRateDisplay !== '--' ? currentRateDisplay : '--'}
+                    <span className="insight-unit">/ kWh</span>
+                  </span>
+                  <p className="insight-caption">{rateInsightCaption}</p>
                 </article>
 
                 <article className="insight-card accent-emerald animatable" data-animate style={{ '--delay': '0.28s' }}>
@@ -2210,37 +2376,120 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                 <tr>
                   <th scope="col">Year</th>
                   <th scope="col">{utilityShortName} annual bill</th>
+                  <th scope="col">{utilityShortName} rate</th>
+                  <th scope="col">{utilityShortName} YoY change</th>
                   <th scope="col">Sunrun annual bill</th>
+                  <th scope="col">Sunrun rate</th>
+                  <th scope="col">Sunrun YoY change</th>
                   <th scope="col">Annual difference</th>
                   <th scope="col">Cumulative savings</th>
                 </tr>
               </thead>
               <tbody>
-                {yearlyBreakdown.map((item) => (
-                  <tr key={item.year}>
-                    <td>{item.year}</td>
-                    <td>${formatCurrency(item.utilityAnnual)}</td>
-                    <td>${formatCurrency(item.sunrunAnnual)}</td>
-                    <td data-positive={item.diffAnnual >= 0}>
-                      ${formatCurrency(Math.abs(item.diffAnnual))}
-                      <span className="yearly-breakdown__difference-label">
-                        {item.diffAnnual >= 0 ? 'saved' : 'extra cost'}
-                      </span>
-                    </td>
-                    <td data-positive={item.cumulativeSavings >= 0}>
-                      ${formatCurrency(Math.abs(item.cumulativeSavings))}
-                      <span className="yearly-breakdown__difference-label">
-                        {item.cumulativeSavings >= 0 ? 'saved total' : 'extra overall'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {yearlyBreakdown.map((item) => {
+                  const utilityRateDisplay = formatRateDisplay(item.utilityRate)
+                  const sunrunRateDisplay = formatRateDisplay(item.sunrunRate)
+                  const utilityRateChangeDisplay = formatYoYChangeDisplay(item.utilityRateChange)
+                  const sunrunRateChangeDisplay = formatYoYChangeDisplay(item.sunrunRateChange)
+
+                  return (
+                    <tr key={item.year}>
+                      <td>{item.year}</td>
+                      <td>${formatCurrency(item.utilityAnnual)}</td>
+                      <td>
+                        {utilityRateDisplay !== '--' ? (
+                          <span className="yearly-breakdown__rate-cell">
+                            <span>{utilityRateDisplay}</span>
+                            <span className="yearly-breakdown__rate-unit">/ kWh</span>
+                          </span>
+                        ) : (
+                          '--'
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className="yearly-breakdown__rate-change"
+                          data-direction={getTrendDirection(item.utilityRateChange)}
+                        >
+                          {utilityRateChangeDisplay}
+                        </span>
+                      </td>
+                      <td>${formatCurrency(item.sunrunAnnual)}</td>
+                      <td>
+                        {sunrunRateDisplay !== '--' ? (
+                          <span className="yearly-breakdown__rate-cell">
+                            <span>{sunrunRateDisplay}</span>
+                            <span className="yearly-breakdown__rate-unit">/ kWh</span>
+                          </span>
+                        ) : (
+                          '--'
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className="yearly-breakdown__rate-change"
+                          data-direction={getTrendDirection(item.sunrunRateChange)}
+                        >
+                          {sunrunRateChangeDisplay}
+                        </span>
+                      </td>
+                      <td data-positive={item.diffAnnual >= 0}>
+                        ${formatCurrency(Math.abs(item.diffAnnual))}
+                        <span className="yearly-breakdown__difference-label">
+                          {item.diffAnnual >= 0 ? 'saved' : 'extra cost'}
+                        </span>
+                      </td>
+                      <td data-positive={item.cumulativeSavings >= 0}>
+                        ${formatCurrency(Math.abs(item.cumulativeSavings))}
+                        <span className="yearly-breakdown__difference-label">
+                          {item.cumulativeSavings >= 0 ? 'saved total' : 'extra overall'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
               <tfoot>
                 <tr>
                   <th scope="row">{projectionLabel || 'Projection'} totals</th>
                   <td>${formatCurrency(totalUtilitySpend)}</td>
+                  <td>
+                    {totalUtilityRateDisplay !== '--' ? (
+                      <span className="yearly-breakdown__rate-cell">
+                        <span>{totalUtilityRateDisplay}</span>
+                        <span className="yearly-breakdown__rate-unit">/ kWh</span>
+                      </span>
+                    ) : (
+                      '--'
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className="yearly-breakdown__rate-change"
+                      data-direction={getTrendDirection(finalUtilityRateChange)}
+                    >
+                      {totalUtilityRateChangeDisplay}
+                    </span>
+                  </td>
                   <td>${formatCurrency(totalSunrunSpend)}</td>
+                  <td>
+                    {totalSunrunRateDisplay !== '--' ? (
+                      <span className="yearly-breakdown__rate-cell">
+                        <span>{totalSunrunRateDisplay}</span>
+                        <span className="yearly-breakdown__rate-unit">/ kWh</span>
+                      </span>
+                    ) : (
+                      '--'
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className="yearly-breakdown__rate-change"
+                      data-direction={getTrendDirection(finalSunrunRateChange)}
+                    >
+                      {totalSunrunRateChangeDisplay}
+                    </span>
+                  </td>
                   <td data-positive={totalSavings >= 0}>
                     ${formatCurrency(Math.abs(totalSavings))}
                     <span className="yearly-breakdown__difference-label">{hasPositiveTotalSavings ? 'saved total' : 'extra cost'}</span>
