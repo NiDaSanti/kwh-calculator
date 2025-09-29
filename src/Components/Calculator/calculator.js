@@ -33,6 +33,21 @@ const MAX_PROJECTION_YEARS = 20
 const DEFAULT_SUNRUN_ESCALATION = 3.5
 const UTILITY_DATA_KEY = 'Utility'
 
+const DEFAULT_UTILITY_COLORS = {
+  gradientStops: [
+    { offset: '0%', color: '#f08a6b' },
+    { offset: '55%', color: '#f5a585' },
+    { offset: '100%', color: '#f9c1a7' }
+  ],
+  dotStroke: '#fce0d4',
+  dotFill: '#f08a6b',
+  referenceDotFill: '#f08a6b',
+  tooltipAccent: '#e76f51',
+  brushStroke: '#e76f51',
+  brushFill: 'rgba(231, 111, 81, 0.12)',
+  brushTraveller: '#e76f51'
+}
+
 const UTILITY_CONFIGS = {
   sce: {
     id: 'sce',
@@ -43,7 +58,8 @@ const UTILITY_CONFIGS = {
       projectedIncrease: '7.5',
       baselineIncrease: '4.0',
       sunrunEscalation: DEFAULT_SUNRUN_ESCALATION.toString()
-    }
+    },
+    colors: DEFAULT_UTILITY_COLORS
   },
   ladwp: {
     id: 'ladwp',
@@ -54,6 +70,20 @@ const UTILITY_CONFIGS = {
       projectedIncrease: '6.0',
       baselineIncrease: '3.0',
       sunrunEscalation: DEFAULT_SUNRUN_ESCALATION.toString()
+    },
+    colors: {
+      gradientStops: [
+        { offset: '0%', color: '#3f72ff' },
+        { offset: '55%', color: '#5f8bff' },
+        { offset: '100%', color: '#8fb0ff' }
+      ],
+      dotStroke: '#d6e2ff',
+      dotFill: '#3f72ff',
+      referenceDotFill: '#3f72ff',
+      tooltipAccent: '#3f72ff',
+      brushStroke: '#3f72ff',
+      brushFill: 'rgba(63, 114, 255, 0.12)',
+      brushTraveller: '#3f72ff'
     }
   }
 }
@@ -155,13 +185,7 @@ const currencyFormatter = (value) => {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
-const tooltipAccentColors = {
-  SunRun: '#2a9d8f',
-  [UTILITY_DATA_KEY]: '#e76f51',
-  Savings: '#f4a261'
-}
-
-const ChartTooltip = ({ active, payload, label, utilityLabel }) => {
+const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) => {
   if (!active || !payload || payload.length === 0) {
     return null
   }
@@ -175,7 +199,7 @@ const ChartTooltip = ({ active, payload, label, utilityLabel }) => {
       return undefined
     }
 
-    return tooltipAccentColors[item.dataKey] ?? item.color ?? item.stroke ?? undefined
+    return accentColors?.[item.dataKey] ?? item.color ?? item.stroke ?? undefined
   }
 
   return (
@@ -234,6 +258,19 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const utilityDisplayName = utilityConfig.displayName
   const utilityTagline = utilityConfig.tagline
   const utilityPossessive = `${utilityShortName}’s`
+  const utilityColors = useMemo(() => {
+    const merged = { ...DEFAULT_UTILITY_COLORS, ...(utilityConfig.colors ?? {}) }
+
+    if (!Array.isArray(merged.gradientStops) || merged.gradientStops.length === 0) {
+      return { ...merged, gradientStops: DEFAULT_UTILITY_COLORS.gradientStops }
+    }
+
+    return merged
+  }, [utilityConfig])
+  const tooltipAccentColors = useMemo(
+    () => ({ SunRun: '#2a9d8f', [UTILITY_DATA_KEY]: utilityColors.tooltipAccent, Savings: '#f4a261' }),
+    [utilityColors.tooltipAccent]
+  )
   const utilityOptions = useMemo(() => Object.values(UTILITY_CONFIGS), [])
   const projectionStartYear = useMemo(() => new Date().getFullYear(), [])
   const yearLabels = useMemo(
@@ -514,8 +551,14 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   }, [])
 
   const renderChartTooltip = useCallback(
-    (tooltipProps) => <ChartTooltip utilityLabel={utilityShortName} {...tooltipProps} />,
-    [utilityShortName]
+    (tooltipProps) => (
+      <ChartTooltip
+        utilityLabel={utilityShortName}
+        accentColors={tooltipAccentColors}
+        {...tooltipProps}
+      />
+    ),
+    [tooltipAccentColors, utilityShortName]
   )
 
   const brushWindowLabel = useMemo(() => {
@@ -1720,10 +1763,10 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     <stop offset="60%" stopColor="#3fc8b3" />
                     <stop offset="100%" stopColor="#64d7c7" />
                   </linearGradient>
-                  <linearGradient id="sceLineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#f08a6b" />
-                    <stop offset="55%" stopColor="#f5a585" />
-                    <stop offset="100%" stopColor="#f9c1a7" />
+                  <linearGradient id="utilityLineGradient" x1="0" y1="0" x2="1" y2="0">
+                    {utilityColors.gradientStops.map(({ offset, color }) => (
+                      <stop key={offset} offset={offset} stopColor={color} />
+                    ))}
                   </linearGradient>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="rgba(244, 162, 97, 0.35)" />
@@ -1783,7 +1826,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                           x={breakEvenPoint.year}
                           y={breakEvenPoint[UTILITY_DATA_KEY]}
                           r={6}
-                          fill="#f08a6b"
+                          fill={utilityColors.referenceDotFill}
                           stroke="#ffffff"
                           strokeWidth={2}
                         />
@@ -1803,19 +1846,19 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   type="monotone"
                   dataKey={UTILITY_DATA_KEY}
                   name={utilityShortName}
-                  stroke="url(#sceLineGradient)"
+                  stroke="url(#utilityLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 6, strokeWidth: 2, stroke: '#fce0d4', fill: '#f08a6b' }}
-                  activeDot={{ r: 9, strokeWidth: 0, fill: '#f08a6b' }}
+                  dot={{ r: 6, strokeWidth: 2, stroke: utilityColors.dotStroke, fill: utilityColors.dotFill }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: utilityColors.dotFill }}
                 />
                 <Brush
                   key={brushKey}
                   dataKey="year"
                   height={36}
-                  stroke="#e76f51"
-                  fill="rgba(231, 111, 81, 0.12)"
+                  stroke={utilityColors.brushStroke}
+                  fill={utilityColors.brushFill}
                   travellerWidth={12}
-                  traveller={{ fill: '#e76f51' }}
+                  traveller={{ fill: utilityColors.brushTraveller }}
                   onChange={handleBrushChange}
                 />
               </ComposedChart>
