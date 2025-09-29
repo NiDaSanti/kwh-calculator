@@ -115,9 +115,9 @@ const currencyFormatter = (value) => {
 }
 
 const tooltipAccentColors = {
-  SunRun: '#6366f1',
-  SCE: '#f472b6',
-  Savings: '#a855f7'
+  SunRun: '#2a9d8f',
+  SCE: '#e76f51',
+  Savings: '#f4a261'
 }
 
 const ChartTooltip = ({ active, payload, label }) => {
@@ -873,7 +873,7 @@ const Calculator = () => {
       <div className="calculator-header animatable" data-animate>
         <span className="calculator-badge">Energy insights</span>
         <h1><span>Visualize</span> your SCE costs with clarity</h1>
-        <p>Enter your recent charges and usage to calculate today&rsquo;s rate, then explore how your percentage-based projections stack up against a steady Sunrun plan.</p>
+        <p>Add your latest bill to pin down today&rsquo;s rate, then compare it with a steady Sunrun plan.</p>
         <div className="header-pills">
           <span>{projectionPillLabel}</span>
           <span>Side-by-side comparison</span>
@@ -885,13 +885,13 @@ const Calculator = () => {
         <form className="calculator-form surface-card animatable" data-animate style={{ '--delay': '0.05s' }} onSubmit={handleSubmit}>
           <div className="form-header">
             <h3>Usage details</h3>
-            <p>We&rsquo;ll use these figures to determine your current kWh rate.</p>
+            <p>These numbers set your current kWh rate.</p>
           </div>
 
           <div className="form-section">
             <div className="form-section__header">
               <span>Current usage snapshot</span>
-              <p>Capture a recent bill to anchor today&rsquo;s rate.</p>
+              <p>Use a recent bill so the rate stays accurate.</p>
             </div>
             <div className="form-grid">
               <div className="form-group">
@@ -958,7 +958,7 @@ const Calculator = () => {
           <div className="form-section">
             <div className="form-section__header">
               <span>Future assumptions</span>
-              <p>Estimate how utility rates might evolve over time.</p>
+              <p>Estimate how your utility rates might grow.</p>
             </div>
             <div className="form-grid">
               <div className="form-group">
@@ -1012,7 +1012,7 @@ const Calculator = () => {
         <div className="result-panel surface-card animatable" data-animate style={{ '--delay': '0.12s' }}>
           <div className="result-header">
             <h3>Bill snapshot</h3>
-            <p>See how your current rate compares with upcoming adjustments.</p>
+            <p>See how today&rsquo;s rate stacks up against your future inputs.</p>
           </div>
 
           {rate !== null ? (
@@ -1145,9 +1145,9 @@ const Calculator = () => {
                     <p className="bill-card__hint">
                       {projectedPlanAnnualSavings !== null
                         ? projectedPlanAnnualSavings >= 0
-                          ? 'Projected annual savings compared with the Sunrun plan.'
-                          : 'Projected annual cost above the Sunrun plan.'
-                        : 'Provide Sunrun and projected utility costs to compare.'}
+                          ? 'Annual savings versus Sunrun.'
+                          : 'Annual cost above Sunrun.'
+                        : 'Add Sunrun and utility costs to compare.'}
                     </p>
                   </div>
                 </article>
@@ -1230,7 +1230,7 @@ const Calculator = () => {
                     {projectionWindowDisplay && <span>{projectionWindowDisplay}</span>}
                   </div>
                   <p className="projection-length-control__caption">
-                    Choose how many years of bills to include across charts, tables, and summaries.
+                    Choose how many years the charts and tables should cover.
                   </p>
                 </div>
               </div>
@@ -1239,7 +1239,7 @@ const Calculator = () => {
                 <article className="insight-card accent-blue animatable" data-animate style={{ '--delay': '0.22s' }}>
                   <span className="insight-label">Current rate</span>
                   <span className="insight-metric">${rate} <span className="insight-unit">/ kWh</span></span>
-                  <p className="insight-caption">Reflects today&rsquo;s billing with your projected {scePecentage || 0}% annual increase.</p>
+                  <p className="insight-caption">Uses today&rsquo;s bill with your projected {scePecentage || 0}% annual increase.</p>
                 </article>
 
                 <article className="insight-card accent-emerald animatable" data-animate style={{ '--delay': '0.28s' }}>
@@ -1251,11 +1251,11 @@ const Calculator = () => {
                   <p className="insight-caption">
                     {hasFirstYearDifference
                       ? firstYearDifference > 0
-                        ? `Keep roughly $${formatCurrencyAbsolute(firstYearDifference)} more in year one when compared with Sunrun's ${formatPercentage(effectiveSunrunEscalation)} escalation.`
-                        : `Expect roughly $${formatCurrencyAbsolute(firstYearDifference)} in additional Sunrun costs during year one at the current rate.`
+                        ? `Save about $${formatCurrencyAbsolute(firstYearDifference)} in year one versus Sunrun's ${formatPercentage(effectiveSunrunEscalation)} escalation.`
+                        : `Plan for about $${formatCurrencyAbsolute(firstYearDifference)} more in year one at this rate.`
                       : monthlyDifference !== null && monthlyDifference < 0
-                        ? 'Sunrun currently adds to your monthly costs—lower the starting rate to see savings.'
-                        : 'Enter a Sunrun monthly cost to explore first-year differences.'}
+                        ? 'Sunrun currently costs more—lower the starting rate to find savings.'
+                        : 'Enter a Sunrun monthly cost to view first-year differences.'}
                   </p>
                 </article>
 
@@ -1270,11 +1270,11 @@ const Calculator = () => {
                   <p className="insight-caption">
                     {hasFinalYearDifference
                       ? finalYearDifference > 0
-                        ? `Projected annual savings by ${finalYearLabel ?? 'final year'} using your utility increase inputs.`
-                        : `Projected annual additional cost by ${finalYearLabel ?? 'final year'} using your utility increase inputs.`
+                        ? `Annual savings by ${finalYearLabel ?? 'final year'} with your inputs.`
+                        : `Annual added cost by ${finalYearLabel ?? 'final year'} with your inputs.`
                       : monthlyDifference !== null && monthlyDifference < 0
-                        ? 'Sunrun remains above SCE over the current projection window at this rate.'
-                        : 'Add a Sunrun monthly cost to unlock multi-year comparisons.'}
+                        ? 'Sunrun stays above SCE across this window.'
+                        : 'Add a Sunrun monthly cost to see multi-year comparisons.'}
                   </p>
                 </article>
                 <article className="insight-card accent-violet animatable" data-animate style={{ '--delay': '0.4s' }}>
@@ -1288,9 +1288,9 @@ const Calculator = () => {
                   <p className="insight-caption">
                     {hasFiveYearDifference
                       ? fiveYearDifference > 0
-                        ? `Keep roughly $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} in your pocket during the first five years.`
-                        : `Plan for about $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} in added costs over the first five years.`
-                      : 'If this value reads zero, adjust the Sunrun starting cost or rate increases to uncover savings or pinpoint added costs.'}
+                        ? `Save about $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} over the first five years.`
+                        : `Expect about $${formatCurrencyAbsolute(fiveYearDifference, { minimumFractionDigits: 0 })} in added costs over the first five years.`
+                      : 'If this reads zero, adjust the Sunrun cost or rate increases to uncover savings or pinpoint added costs.'}
                   </p>
                 </article>
                 <article className="insight-card accent-slate animatable" data-animate style={{ '--delay': '0.46s' }}>
@@ -1304,9 +1304,9 @@ const Calculator = () => {
                   <p className="insight-caption">
                     {hasYearlyBreakdown
                       ? hasPositiveTotalSavings
-                        ? 'Total projected savings when comparing annual spend over your full horizon.'
-                        : 'Sunrun costs more overall—adjust the starting price or rate escalations to find savings.'
-                      : 'Add a Sunrun monthly cost to compare total spending over time.'}
+                        ? 'Total projected savings across your full horizon.'
+                        : 'Sunrun costs more overall—tweak the starting price or escalations to find savings.'
+                      : 'Add a Sunrun monthly cost to compare total spending.'}
                   </p>
                 </article>
                 <article className="insight-card accent-indigo animatable" data-animate style={{ '--delay': '0.52s' }}>
@@ -1322,7 +1322,7 @@ const Calculator = () => {
               <div className="assumption-panel animatable" data-animate style={{ '--delay': '0.28s' }}>
                 <div className="assumption-panel__header">
                   <h4>Annual increase inputs</h4>
-                  <p>Compare the percentages you entered for utility growth with your selected Sunrun escalation.</p>
+                  <p>Compare your utility increases with the Sunrun escalation.</p>
                 </div>
                 <div className="assumption-panel__grid">
                   <div className="assumption-metric">
@@ -1357,7 +1357,7 @@ const Calculator = () => {
                 <div className="homeowner-snapshot__header">
                   <span className="homeowner-snapshot__badge">Household essentials</span>
                   <h4>The numbers homeowners ask about first</h4>
-                  <p>Quickly gauge how today&rsquo;s bills and tomorrow&rsquo;s projections affect your home budget.</p>
+                  <p>Quickly see how today&rsquo;s bills and tomorrow&rsquo;s projections affect your budget.</p>
                 </div>
                 <div className="homeowner-snapshot__grid">
                   <div className="snapshot-tile">
@@ -1409,17 +1409,17 @@ const Calculator = () => {
                       {projectedPlanAnnualSavings !== null ? (
                         <>
                           {projectedPlanAnnualSavings >= 0
-                            ? 'Annual breathing room compared with your projected utility bill.'
-                            : 'Extra annual spend compared with your projected utility bill—adjust assumptions to find savings.'}
+                            ? 'Annual breathing room versus your projected utility bill.'
+                            : 'Extra annual spend versus your projected utility bill—tweak assumptions to find savings.'}
                           {baselineAnnualSavings !== null && (
                             <span className="snapshot-tile__note">
                               {baselineAnnualSavings >= 0
-                                ? `Today's rate comparison: $${formatCurrencyAbsolute(baselineAnnualSavings)} saved per year.`
-                                : `Today's rate comparison: $${formatCurrencyAbsolute(baselineAnnualSavings)} extra per year.`}
+                                ? `Today's rate check: $${formatCurrencyAbsolute(baselineAnnualSavings)} saved per year.`
+                                : `Today's rate check: $${formatCurrencyAbsolute(baselineAnnualSavings)} extra per year.`}
                             </span>
                           )}
                         </>
-                      ) : 'Add a Sunrun monthly cost to compare annual spend directly.'}
+                      ) : 'Add a Sunrun monthly cost to compare annual spend.'}
                     </p>
                   </div>
                 </div>
@@ -1430,7 +1430,7 @@ const Calculator = () => {
                   <div className="scenario-panel__header">
                     <span className="scenario-panel__badge">Rate planning</span>
                     <h4>Stress-test your savings story</h4>
-                    <p>See how different growth paths for utility rates shift your long-term budget.</p>
+                    <p>See how different utility growth paths reshape your long-term budget.</p>
                   </div>
                   <div className="scenario-panel__grid">
                     {scenarioSummaries.map((scenario, index) => (
@@ -1476,7 +1476,7 @@ const Calculator = () => {
                   <div className="savings-summary__header">
                     <span className="savings-summary__badge"><TrendingUpIcon /> Savings storyline</span>
                     <h4>See how the gap evolves as rates shift</h4>
-                    <p>Your figures recalculate instantly as you tweak the plan above.</p>
+                    <p>Figures update instantly as you tweak the plan above.</p>
                   </div>
                   <div className="savings-summary__grid">
                     <div className="metric-chip">
@@ -1494,9 +1494,9 @@ const Calculator = () => {
                         <p className="metric-chip__caption">
                           {hasCumulativeProjectionDifference
                             ? cumulativeProjectionDifference > 0
-                              ? 'Total savings when comparing month-to-month bills over your projection horizon.'
-                              : 'Sunrun adds to your projected costs compared with SCE over this horizon.'
-                            : 'Adjust assumptions until Sunrun pulls ahead to reveal multi-year differences.'}
+                              ? 'Total savings across your projection window.'
+                              : 'Sunrun adds to your projected costs across this window.'
+                            : 'Adjust the entries until Sunrun pulls ahead to reveal multi-year differences.'}
                         </p>
                       </div>
                     </div>
@@ -1513,8 +1513,8 @@ const Calculator = () => {
                         </p>
                         <p className="metric-chip__caption">
                           {hasPeakSavings
-                            ? 'Highest projected annual savings before utility increases narrow the gap.'
-                            : 'Savings never overtake SCE with the current entries—try a lower Sunrun rate.'}
+                            ? 'Highest annual savings before the gap narrows.'
+                            : 'Savings never pass SCE here—try a lower Sunrun rate.'}
                         </p>
                       </div>
                     </div>
@@ -1538,7 +1538,7 @@ const Calculator = () => {
           ) : (
             <div className="empty-state animatable" data-animate style={{ '--delay': '0.12s' }}>
               <h4>Ready when you are</h4>
-              <p>Provide your charges and usage to unlock projections tailored to your household.</p>
+              <p>Add your charges and usage to unlock tailored projections.</p>
             </div>
           )}
         </div>
@@ -1562,26 +1562,26 @@ const Calculator = () => {
               >
                 <defs>
                   <linearGradient id="sunrunLineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="45%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
+                    <stop offset="0%" stopColor="#2a9d8f" />
+                    <stop offset="45%" stopColor="#21867c" />
+                    <stop offset="100%" stopColor="#1b5f58" />
                   </linearGradient>
                   <linearGradient id="sceLineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#f472b6" />
-                    <stop offset="48%" stopColor="#d946ef" />
-                    <stop offset="100%" stopColor="#7c3aed" />
+                    <stop offset="0%" stopColor="#e76f51" />
+                    <stop offset="48%" stopColor="#d65a3f" />
+                    <stop offset="100%" stopColor="#b04932" />
                   </linearGradient>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.42} />
-                    <stop offset="35%" stopColor="#6366f1" stopOpacity={0.28} />
-                    <stop offset="70%" stopColor="#8b5cf6" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="#c084fc" stopOpacity={0.08} />
+                    <stop offset="0%" stopColor="#f4a261" stopOpacity={0.42} />
+                    <stop offset="35%" stopColor="#e76f51" stopOpacity={0.24} />
+                    <stop offset="70%" stopColor="#2a9d8f" stopOpacity={0.18} />
+                    <stop offset="100%" stopColor="#1b5f58" stopOpacity={0.08} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="#3d4f7c" vertical={false} />
+                <CartesianGrid strokeDasharray="4 4" stroke="#5c7b82" vertical={false} />
                 <XAxis
                   dataKey="year"
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#e2e8f0' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#f8f2ec' }}
                   angle={-30}
                   textAnchor="end"
                   interval={0}
@@ -1590,11 +1590,11 @@ const Calculator = () => {
                 />
                 <YAxis
                   tickFormatter={currencyFormatter}
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#e2e8f0' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#f8f2ec' }}
                   width={90}
                   tickMargin={16}
                 />
-                <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#94a3b8' }} />
+                <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#8ca7ab' }} />
                 {isDesktop && (
                   <Legend
                     verticalAlign="top"
@@ -1609,16 +1609,16 @@ const Calculator = () => {
                   dataKey="SunRun"
                   stroke="url(#sunrunLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#c7d2fe', fill: '#312e81' }}
-                  activeDot={{ r: 9, strokeWidth: 0, fill: '#4338ca' }}
+                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#9ed8cc', fill: '#1b5f58' }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: '#2a9d8f' }}
                 />
                 <Line
                   type="monotone"
                   dataKey="SCE"
                   stroke="url(#sceLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#fbcfe8', fill: '#6d28d9' }}
-                  activeDot={{ r: 9, strokeWidth: 0, fill: '#7c3aed' }}
+                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#f2c9b7', fill: '#b04932' }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: '#e76f51' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -1633,7 +1633,7 @@ const Calculator = () => {
               <span className="yearly-breakdown__badge"><TableChartIcon /> Yearly breakdown</span>
               <h3>Compare annual totals side by side</h3>
             </div>
-            <p>See how cumulative savings build each year as rates change.</p>
+            <p>Watch cumulative savings grow as rates change.</p>
           </div>
           <div className="yearly-breakdown__table-wrapper">
             <table className="yearly-breakdown__table">
