@@ -66,13 +66,25 @@ function App() {
     }
 
     const params = new URLSearchParams(window.location.search)
+    const currentUtility = params.get('utility')
+
+    if (currentUtility === activeUtility) {
+      return
+    }
+
     params.set('utility', activeUtility)
 
     const search = params.toString()
     const hash = window.location.hash
     const nextUrl = `${window.location.pathname}${search ? `?${search}` : ''}${hash}`
 
-    window.history.replaceState(null, '', nextUrl)
+    const currentSearch = window.location.search.startsWith('?')
+      ? window.location.search.slice(1)
+      : window.location.search
+
+    if (search !== currentSearch) {
+      window.history.replaceState(null, '', nextUrl)
+    }
   }, [activeUtility])
 
   const utilityTabs = useMemo(() => UTILITY_OPTIONS, [])
