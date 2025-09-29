@@ -1027,7 +1027,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   }, [animationTriggerKey])
 
   return (
-    <section id={id} className="calculator-container">
+    <section id={id} className="calculator-container" data-utility-theme={selectedUtility}>
       <div className="calculator-header animatable" data-animate>
         <span className="calculator-badge">Energy insights</span>
         <h1><span>Visualize</span> your {utilityShortName} costs with clarity</h1>
@@ -1774,27 +1774,27 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     <stop offset="100%" stopColor="rgba(100, 215, 199, 0.16)" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0d5c8" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid-stroke)" vertical={false} />
                 <XAxis
                   dataKey="year"
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#5a4c43' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--chart-axis-tick)' }}
                   angle={-30}
                   textAnchor="end"
                   interval={0}
                   height={70}
                   tickMargin={18}
-                  axisLine={{ stroke: '#d9cbb8' }}
-                  tickLine={{ stroke: '#d9cbb8' }}
+                  axisLine={{ stroke: 'var(--chart-axis-line)' }}
+                  tickLine={{ stroke: 'var(--chart-axis-line)' }}
                 />
                 <YAxis
                   tickFormatter={currencyFormatter}
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#5a4c43' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--chart-axis-tick)' }}
                   width={90}
                   tickMargin={16}
-                  axisLine={{ stroke: '#d9cbb8' }}
-                  tickLine={{ stroke: '#d9cbb8' }}
+                  axisLine={{ stroke: 'var(--chart-axis-line)' }}
+                  tickLine={{ stroke: 'var(--chart-axis-line)' }}
                 />
-                <Tooltip content={renderChartTooltip} cursor={{ strokeDasharray: '4 2', stroke: '#d7b89a' }} />
+                <Tooltip content={renderChartTooltip} cursor={{ strokeDasharray: '4 2', stroke: 'var(--chart-tooltip-cursor)' }} />
                 {isDesktop && (
                   <Legend
                     verticalAlign="top"
@@ -1808,9 +1808,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   <>
                     <ReferenceLine
                       x={breakEvenYear}
-                      stroke="#b07a5b"
+                      stroke="var(--chart-reference-line)"
                       strokeDasharray="4 4"
-                      label={{ value: 'Break-even', position: 'insideTop', fill: '#b07a5b', fontSize: 12 }}
+                      label={{ value: 'Break-even', position: 'insideTop', fill: 'var(--chart-reference-label)', fontSize: 12 }}
                     />
                     {breakEvenPoint && (
                       <>
