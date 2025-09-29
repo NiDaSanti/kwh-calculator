@@ -917,13 +917,13 @@ button:hover::after {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: linear-gradient(140deg, rgba(38, 70, 83, 0.95), rgba(77, 101, 112, 0.9));
-  border: 1px solid rgba(38, 70, 83, 0.45);
-  box-shadow: 0 35px 65px rgba(38, 70, 83, 0.4);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 242, 236, 0.92));
+  border: 1px solid rgba(207, 177, 148, 0.45);
+  box-shadow: 0 35px 55px rgba(209, 186, 162, 0.32);
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(6px);
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease, border-color 0.55s ease;
 }
 
@@ -942,15 +942,15 @@ button:hover::after {
   inset: auto -28% -45% auto;
   height: 280px;
   width: 280px;
-  background: radial-gradient(circle at center, rgba(244, 162, 97, 0.35), rgba(20, 40, 48, 0.05) 70%);
+  background: radial-gradient(circle at center, rgba(244, 162, 97, 0.28), rgba(255, 255, 255, 0) 70%);
 }
 
 .chart-card::after {
   inset: -36% auto auto -32%;
   height: 240px;
   width: 240px;
-  background: radial-gradient(circle at center, rgba(42, 157, 143, 0.28), rgba(16, 32, 38, 0.05) 70%);
-  mix-blend-mode: screen;
+  background: radial-gradient(circle at center, rgba(42, 157, 143, 0.22), rgba(255, 255, 255, 0) 70%);
+  mix-blend-mode: normal;
 }
 
 .yearly-breakdown-card {
@@ -1064,7 +1064,7 @@ button:hover::after {
 
 .chart-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 28px 60px rgba(38, 70, 83, 0.28);
+  box-shadow: 0 32px 60px rgba(209, 186, 162, 0.35);
 }
 
 .savings-summary {
@@ -1517,6 +1517,44 @@ button:hover::after {
   color: var(--color-muted);
 }
 
+.chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(244, 162, 97, 0.15);
+  border: 1px solid rgba(244, 162, 97, 0.26);
+  color: var(--color-ink);
+  flex-wrap: wrap;
+}
+
+.chart-controls span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.chart-controls button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #f4a261, #f7c59f);
+  color: #543a2c;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(244, 162, 97, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(244, 162, 97, 0.3);
+}
+
 .chart-wrapper {
   width: 100%;
   height: 100%;
@@ -1539,15 +1577,15 @@ button:hover::after {
 .chart-wrapper::before {
   background: repeating-linear-gradient(
       0deg,
-      rgba(244, 162, 97, 0.08) 0px,
-      rgba(244, 162, 97, 0.08) 1px,
+      rgba(244, 162, 97, 0.05) 0px,
+      rgba(244, 162, 97, 0.05) 1px,
       transparent 1px,
       transparent 22px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(42, 157, 143, 0.08) 0px,
-      rgba(42, 157, 143, 0.08) 1px,
+      rgba(42, 157, 143, 0.05) 0px,
+      rgba(42, 157, 143, 0.05) 1px,
       transparent 1px,
       transparent 28px
     );
@@ -1556,8 +1594,8 @@ button:hover::after {
 
 .chart-wrapper::after {
   inset: 0;
-  background: radial-gradient(circle at top right, rgba(244, 162, 97, 0.14), transparent 55%),
-    radial-gradient(circle at bottom left, rgba(42, 157, 143, 0.14), transparent 60%);
+  background: radial-gradient(circle at top right, rgba(244, 162, 97, 0.16), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(42, 157, 143, 0.16), transparent 60%);
   mix-blend-mode: lighten;
   z-index: 0;
 }
@@ -1569,9 +1607,10 @@ button:hover::after {
   min-width: 200px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(38, 70, 83, 0.92);
-  color: #fefcf9;
-  box-shadow: 0 18px 45px rgba(38, 70, 83, 0.32);
+  background: #ffffff;
+  color: var(--color-ink);
+  border: 1px solid rgba(207, 177, 148, 0.35);
+  box-shadow: 0 18px 45px rgba(176, 122, 91, 0.22);
 }
 
 .chart-tooltip__label {
@@ -1579,7 +1618,7 @@ button:hover::after {
   font-size: 0.9rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: rgba(255, 236, 224, 0.8);
+  color: rgba(96, 74, 54, 0.75);
 }
 
 .chart-tooltip__item {
@@ -1602,7 +1641,7 @@ button:hover::after {
   height: 10px;
   border-radius: 999px;
   background: var(--color, var(--color-accent));
-  box-shadow: 0 0 0 3px rgba(207, 177, 148, 0.3);
+  box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.22);
 }
 
 .chart-tooltip__item strong {
@@ -1617,32 +1656,32 @@ button:hover::after {
   margin-top: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(244, 162, 97, 0.16);
-  color: #f4a261;
+  background: rgba(244, 162, 97, 0.18);
+  color: #d0613c;
   font-weight: 600;
   font-size: 0.95rem;
 }
 
 .recharts-line-SunRun path {
-  filter: drop-shadow(0 0 10px rgba(42, 157, 143, 0.35));
+  filter: drop-shadow(0 0 8px rgba(63, 200, 179, 0.35));
 }
 
 .recharts-line-SCE path {
-  filter: drop-shadow(0 0 10px rgba(231, 111, 81, 0.3));
+  filter: drop-shadow(0 0 8px rgba(240, 138, 107, 0.3));
 }
 
 .recharts-line-SunRun .recharts-dot {
-  fill: #1b5f58 !important;
-  stroke: rgba(158, 216, 204, 0.9) !important;
+  fill: #2a9d8f !important;
+  stroke: rgba(191, 233, 223, 0.95) !important;
   stroke-width: 2px;
-  filter: drop-shadow(0 0 6px rgba(42, 157, 143, 0.35));
+  filter: drop-shadow(0 0 6px rgba(100, 215, 199, 0.35));
 }
 
 .recharts-line-SCE .recharts-dot {
-  fill: #b04932 !important;
-  stroke: rgba(242, 201, 183, 0.92) !important;
+  fill: #f08a6b !important;
+  stroke: rgba(252, 224, 212, 0.9) !important;
   stroke-width: 2px;
-  filter: drop-shadow(0 0 6px rgba(231, 111, 81, 0.35));
+  filter: drop-shadow(0 0 6px rgba(240, 138, 107, 0.35));
 }
 
 .recharts-default-legend {
