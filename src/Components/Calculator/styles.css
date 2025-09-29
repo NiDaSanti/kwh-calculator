@@ -30,6 +30,22 @@
   --chart-reference-label: #b07a5b;
   --shadow-badge: rgba(183, 109, 76, 0.28);
   --badge-highlight: rgba(244, 162, 97, 0.4);
+  --surface-card-background: rgba(255, 255, 255, 0.94);
+  --form-control-background: rgba(248, 242, 236, 0.92);
+  --form-control-border: rgba(198, 168, 140, 0.42);
+  --form-control-focus-shadow: rgba(231, 111, 81, 0.18);
+  --reset-button-background: rgba(104, 80, 59, 0.08);
+  --reset-button-hover-background: rgba(104, 80, 59, 0.14);
+  --sunrun-input-background: linear-gradient(135deg, rgba(255, 236, 224, 0.65), rgba(230, 244, 239, 0.45));
+  --sunrun-input-border: rgba(207, 177, 148, 0.3);
+  --sunrun-focus-shadow: rgba(42, 157, 143, 0.18);
+  --bill-card-background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(247, 238, 230, 0.98));
+  --bill-card-border: rgba(207, 177, 148, 0.35);
+  --bill-card-border-hover: rgba(207, 177, 148, 0.45);
+  --bill-card-shadow: rgba(120, 82, 54, 0.16);
+  --bill-card-shadow-hover: rgba(120, 82, 54, 0.22);
+  --bill-card-soft: rgba(148, 163, 184, 0.16);
+  --bill-card-glow: rgba(148, 163, 184, 0.18);
 }
 
 :root[data-theme='dark'] {
@@ -63,6 +79,22 @@
   --chart-reference-label: #f6b37c;
   --shadow-badge: rgba(0, 0, 0, 0.42);
   --badge-highlight: rgba(242, 132, 92, 0.38);
+  --surface-card-background: linear-gradient(135deg, rgba(48, 39, 33, 0.94), rgba(36, 29, 25, 0.96));
+  --form-control-background: rgba(44, 36, 31, 0.92);
+  --form-control-border: rgba(132, 101, 78, 0.6);
+  --form-control-focus-shadow: rgba(242, 132, 92, 0.26);
+  --reset-button-background: rgba(255, 255, 255, 0.08);
+  --reset-button-hover-background: rgba(255, 255, 255, 0.14);
+  --sunrun-input-background: linear-gradient(135deg, rgba(66, 53, 43, 0.8), rgba(40, 52, 50, 0.78));
+  --sunrun-input-border: rgba(132, 101, 78, 0.55);
+  --sunrun-focus-shadow: rgba(73, 197, 179, 0.26);
+  --bill-card-background: linear-gradient(135deg, rgba(48, 39, 33, 0.94), rgba(32, 37, 38, 0.96));
+  --bill-card-border: rgba(124, 96, 72, 0.5);
+  --bill-card-border-hover: rgba(124, 96, 72, 0.65);
+  --bill-card-shadow: rgba(0, 0, 0, 0.55);
+  --bill-card-shadow-hover: rgba(0, 0, 0, 0.66);
+  --bill-card-soft: rgba(120, 145, 165, 0.14);
+  --bill-card-glow: rgba(124, 96, 72, 0.32);
 }
 
 body {
@@ -266,7 +298,7 @@ body {
 }
 
 .surface-card {
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--surface-card-background);
   border-radius: 24px;
   padding: clamp(24px, 2.8vw, 32px);
   border: 1px solid var(--color-card-border);
@@ -392,9 +424,9 @@ body {
   padding: 14px 16px;
   font-size: 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(198, 168, 140, 0.42);
+  border: 1px solid var(--form-control-border);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background: rgba(248, 242, 236, 0.92);
+  background: var(--form-control-background);
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -404,7 +436,7 @@ body {
 .form-group select:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 4px rgba(231, 111, 81, 0.18);
+  box-shadow: 0 0 0 4px var(--form-control-focus-shadow);
 }
 
 .input-helper {
@@ -482,13 +514,13 @@ button:hover::after {
 }
 
 .button-group .reset {
-  background: rgba(104, 80, 59, 0.08);
+  background: var(--reset-button-background);
   color: var(--color-ink);
   box-shadow: none;
 }
 
 .button-group .reset:hover {
-  background: rgba(104, 80, 59, 0.14);
+  background: var(--reset-button-hover-background);
   box-shadow: none;
 }
 
@@ -528,9 +560,9 @@ button:hover::after {
   align-items: flex-start;
   padding: 20px 22px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(247, 238, 230, 0.98));
-  border: 1px solid var(--accent-border, rgba(207, 177, 148, 0.35));
-  box-shadow: 0 18px 40px rgba(120, 82, 54, 0.16);
+  background: var(--bill-card-background);
+  border: 1px solid var(--accent-border, var(--bill-card-border));
+  box-shadow: 0 18px 40px var(--accent-shadow, var(--bill-card-shadow));
   overflow: hidden;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
 }
@@ -541,7 +573,7 @@ button:hover::after {
   inset: -60px -40px auto auto;
   width: 180px;
   height: 180px;
-  background: radial-gradient(circle at center, var(--accent-glow, rgba(148, 163, 184, 0.18)), transparent 70%);
+  background: radial-gradient(circle at center, var(--accent-glow, var(--bill-card-glow)), transparent 70%);
   opacity: 0.85;
   transform: rotate(18deg);
   z-index: 0;
@@ -549,8 +581,8 @@ button:hover::after {
 
 .bill-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 26px 55px rgba(120, 82, 54, 0.22);
-  border-color: var(--accent-border-hover, rgba(207, 177, 148, 0.45));
+  box-shadow: 0 26px 55px var(--accent-shadow-hover, var(--bill-card-shadow-hover));
+  border-color: var(--accent-border-hover, var(--bill-card-border-hover));
 }
 
 .bill-card > * {
@@ -565,7 +597,7 @@ button:hover::after {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: var(--accent-soft, rgba(148, 163, 184, 0.16));
+  background: var(--accent-soft, var(--bill-card-soft));
   color: var(--accent-color, var(--color-ink));
   box-shadow: 0 12px 28px var(--accent-shadow, rgba(15, 23, 42, 0.12));
 }
@@ -726,8 +758,8 @@ button:hover::after {
   gap: 16px;
   padding: 18px 20px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255, 236, 224, 0.65), rgba(230, 244, 239, 0.45));
-  border: 1px solid rgba(207, 177, 148, 0.3);
+  background: var(--sunrun-input-background);
+  border: 1px solid var(--sunrun-input-border);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -760,15 +792,15 @@ button:hover::after {
   max-width: 240px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(198, 168, 140, 0.38);
-  background: rgba(248, 242, 236, 0.92);
+  border: 1px solid var(--form-control-border);
+  background: var(--form-control-background);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sunrun-input-row input:focus {
   outline: none;
   border-color: var(--color-accent-secondary);
-  box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.18);
+  box-shadow: 0 0 0 4px var(--sunrun-focus-shadow);
 }
 
 .sunrun-input-helpers {
