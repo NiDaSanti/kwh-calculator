@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  ComposedChart,
+  Line,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Brush,
+  ReferenceLine,
+  ReferenceDot
+} from 'recharts'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import BoltTwoToneIcon from '@mui/icons-material/BoltTwoTone'
 import SolarPowerTwoToneIcon from '@mui/icons-material/SolarPowerTwoTone'
@@ -184,6 +197,8 @@ const Calculator = () => {
   const [fieldErrors, setFieldErrors] = useState({})
   const [sunrunProjectionStatus, setSunrunProjectionStatus] = useState(null)
   const [projectionYears, setProjectionYears] = useState(DEFAULT_PROJECTION_YEARS)
+  const [brushRange, setBrushRange] = useState(null)
+  const [brushKey, setBrushKey] = useState(0)
   const projectionStartYear = useMemo(() => new Date().getFullYear(), [])
   const yearLabels = useMemo(
     () => generateYearLabels(projectionStartYear, projectionYears),
@@ -421,6 +436,44 @@ const Calculator = () => {
     })
     .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills, yearLabels])
 
+  useEffect(() => {
+    setBrushRange(null)
+    setBrushKey((prev) => prev + 1)
+  }, [chartData.length])
+
+  const handleBrushChange = useCallback((range) => {
+    if (!range || typeof range.startIndex !== 'number' || typeof range.endIndex !== 'number') {
+      setBrushRange(null)
+      return
+    }
+
+    setBrushRange(range)
+  }, [])
+
+  const handleBrushReset = useCallback(() => {
+    setBrushRange(null)
+    setBrushKey((prev) => prev + 1)
+  }, [])
+
+  const brushWindowLabel = useMemo(() => {
+    if (chartData.length === 0) {
+      return null
+    }
+
+    if (!brushRange) {
+      return 'Viewing full projection'
+    }
+
+    const start = chartData[brushRange.startIndex]?.year
+    const end = chartData[Math.min(brushRange.endIndex, chartData.length - 1)]?.year
+
+    if (!start || !end) {
+      return null
+    }
+
+    return start === end ? `Zoomed to ${start}` : `Zoomed view: ${start} – ${end}`
+  }, [brushRange, chartData])
+
   const yearlyBreakdown = useMemo(() => {
     if (chartData.length === 0) {
       return []
@@ -480,6 +533,13 @@ const Calculator = () => {
   const hasPositiveTotalSavings = totalSavings > 0
   const breakEvenYear = yearlyBreakdown.find((item) => item.cumulativeSavings > 0)?.year ?? null
   const hasBreakEven = breakEvenYear !== null
+  const breakEvenPoint = useMemo(() => {
+    if (!hasBreakEven) {
+      return null
+    }
+
+    return chartData.find((item) => item.year === breakEvenYear) ?? null
+  }, [chartData, hasBreakEven, breakEvenYear])
   const projectionLabel = projectionYears > 0 ? `${projectionYears}-year` : ''
   const finalYearLabel = chartData.length > 0 ? chartData[chartData.length - 1].year : null
   const projectionWindowStart = yearLabels[0] ?? null
@@ -1543,6 +1603,16 @@ const Calculator = () => {
               Track the gap between SCE&rsquo;s expected increases and Sunrun&rsquo;s steady {formatPercentage(effectiveSunrunEscalation)} escalation
               across {projectionWindowDisplay || 'your selected horizon'}.
             </p>
+            {brushWindowLabel && (
+              <div className="chart-controls">
+                <span>{brushWindowLabel}</span>
+                {brushRange && (
+                  <button type="button" onClick={handleBrushReset}>
+                    Reset zoom
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="chart-wrapper">
@@ -1554,38 +1624,41 @@ const Calculator = () => {
                 <defs>
                   <linearGradient id="sunrunLineGradient" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#2a9d8f" />
-                    <stop offset="45%" stopColor="#21867c" />
-                    <stop offset="100%" stopColor="#1b5f58" />
+                    <stop offset="60%" stopColor="#3fc8b3" />
+                    <stop offset="100%" stopColor="#64d7c7" />
                   </linearGradient>
                   <linearGradient id="sceLineGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#e76f51" />
-                    <stop offset="48%" stopColor="#d65a3f" />
-                    <stop offset="100%" stopColor="#b04932" />
+                    <stop offset="0%" stopColor="#f08a6b" />
+                    <stop offset="55%" stopColor="#f5a585" />
+                    <stop offset="100%" stopColor="#f9c1a7" />
                   </linearGradient>
                   <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f4a261" stopOpacity={0.42} />
-                    <stop offset="35%" stopColor="#e76f51" stopOpacity={0.24} />
-                    <stop offset="70%" stopColor="#2a9d8f" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="#1b5f58" stopOpacity={0.08} />
+                    <stop offset="0%" stopColor="rgba(244, 162, 97, 0.35)" />
+                    <stop offset="45%" stopColor="rgba(243, 154, 126, 0.24)" />
+                    <stop offset="100%" stopColor="rgba(100, 215, 199, 0.16)" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="#5c7b82" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0d5c8" vertical={false} />
                 <XAxis
                   dataKey="year"
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#f8f2ec' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#5a4c43' }}
                   angle={-30}
                   textAnchor="end"
                   interval={0}
                   height={70}
                   tickMargin={18}
+                  axisLine={{ stroke: '#d9cbb8' }}
+                  tickLine={{ stroke: '#d9cbb8' }}
                 />
                 <YAxis
                   tickFormatter={currencyFormatter}
-                  tick={{ fontSize: 12, fontWeight: 600, fill: '#f8f2ec' }}
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#5a4c43' }}
                   width={90}
                   tickMargin={16}
+                  axisLine={{ stroke: '#d9cbb8' }}
+                  tickLine={{ stroke: '#d9cbb8' }}
                 />
-                <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#8ca7ab' }} />
+                <Tooltip content={<ChartTooltip />} cursor={{ strokeDasharray: '4 2', stroke: '#d7b89a' }} />
                 {isDesktop && (
                   <Legend
                     verticalAlign="top"
@@ -1595,12 +1668,42 @@ const Calculator = () => {
                   />
                 )}
                 <Area type="monotone" dataKey="Savings" stroke="none" fill="url(#savingsGradient)" fillOpacity={1} legendType="none" />
+                {hasBreakEven && (
+                  <>
+                    <ReferenceLine
+                      x={breakEvenYear}
+                      stroke="#b07a5b"
+                      strokeDasharray="4 4"
+                      label={{ value: 'Break-even', position: 'insideTop', fill: '#b07a5b', fontSize: 12 }}
+                    />
+                    {breakEvenPoint && (
+                      <>
+                        <ReferenceDot
+                          x={breakEvenPoint.year}
+                          y={breakEvenPoint.SunRun}
+                          r={6}
+                          fill="#2a9d8f"
+                          stroke="#ffffff"
+                          strokeWidth={2}
+                        />
+                        <ReferenceDot
+                          x={breakEvenPoint.year}
+                          y={breakEvenPoint.SCE}
+                          r={6}
+                          fill="#f08a6b"
+                          stroke="#ffffff"
+                          strokeWidth={2}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
                 <Line
                   type="monotone"
                   dataKey="SunRun"
                   stroke="url(#sunrunLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#9ed8cc', fill: '#1b5f58' }}
+                  dot={{ r: 6, strokeWidth: 2, stroke: '#bfe9df', fill: '#2a9d8f' }}
                   activeDot={{ r: 9, strokeWidth: 0, fill: '#2a9d8f' }}
                 />
                 <Line
@@ -1608,8 +1711,18 @@ const Calculator = () => {
                   dataKey="SCE"
                   stroke="url(#sceLineGradient)"
                   strokeWidth={3.5}
-                  dot={{ r: 6.25, strokeWidth: 2.5, stroke: '#f2c9b7', fill: '#b04932' }}
-                  activeDot={{ r: 9, strokeWidth: 0, fill: '#e76f51' }}
+                  dot={{ r: 6, strokeWidth: 2, stroke: '#fce0d4', fill: '#f08a6b' }}
+                  activeDot={{ r: 9, strokeWidth: 0, fill: '#f08a6b' }}
+                />
+                <Brush
+                  key={brushKey}
+                  dataKey="year"
+                  height={36}
+                  stroke="#e76f51"
+                  fill="rgba(231, 111, 81, 0.12)"
+                  travellerWidth={12}
+                  traveller={{ fill: '#e76f51' }}
+                  onChange={handleBrushChange}
                 />
               </ComposedChart>
             </ResponsiveContainer>
