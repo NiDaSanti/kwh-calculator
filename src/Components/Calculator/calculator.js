@@ -173,7 +173,6 @@ const Calculator = () => {
   const [rate, setRate] = useState(null)
   const [projectedFutureRateIncrease, setProjectedFutureRateIncrease] = useState('0.00')
   const [avgPerMonthCost, setAvgPerMonthCost] = useState(null)
-  const [projectedBills, setProjectedBills] = useState({ sunrunBills: [], sceBills: [] })
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') {
       return true
@@ -278,25 +277,34 @@ const Calculator = () => {
     }
   }
 
-  const generateProjectedBills = useCallback((initialBill, sunRunStartMonthlyCost) => {
+  const projectedBills = useMemo(() => {
+    const monthlyBill = typeof avgPerMonthCost === 'string' ? parseFloat(avgPerMonthCost) : avgPerMonthCost
+    const sunrunStart = typeof sunRunMonthlyCost === 'string' ? parseFloat(sunRunMonthlyCost) : sunRunMonthlyCost
+
+    if (!Number.isFinite(monthlyBill) || !Number.isFinite(sunrunStart) || sunrunStart <= 0) {
+      return { sunrunBills: [], sceBills: [] }
+    }
+
     const parsedInitialIncrease = parseFloat(scePecentage)
     const parsedMinIncrease = parseFloat(projectedFutureRateIncrease)
     const parsedEscalation = parseFloat(sunrunEscalation)
-    const safeEscalation = Number.isNaN(parsedEscalation) ? DEFAULT_SUNRUN_ESCALATION : parsedEscalation
-    const { sunrunBills, sceBills } = computeProjectedBills(
-      initialBill,
-      sunRunStartMonthlyCost,
+
+    return computeProjectedBills(
+      monthlyBill,
+      sunrunStart,
       Number.isNaN(parsedInitialIncrease) ? 0 : parsedInitialIncrease,
       Number.isNaN(parsedMinIncrease) ? 0 : parsedMinIncrease,
-      safeEscalation,
+      Number.isNaN(parsedEscalation) ? DEFAULT_SUNRUN_ESCALATION : parsedEscalation,
       yearLabels.length
     )
-
-    setProjectedBills({
-      sunrunBills: sunrunBills.map((bill) => bill.toFixed(2)),
-      sceBills: sceBills.map((bill) => bill.toFixed(2))
-    })
-  }, [scePecentage, projectedFutureRateIncrease, sunrunEscalation, yearLabels.length])
+  }, [
+    avgPerMonthCost,
+    projectedFutureRateIncrease,
+    scePecentage,
+    sunRunMonthlyCost,
+    sunrunEscalation,
+    yearLabels.length
+  ])
 
   useEffect(() => {
     const parsedPercentage = parseFloat(scePecentage)
@@ -314,21 +322,6 @@ const Calculator = () => {
       setProjectedMonthlyBill(null)
     }
   }, [rate, annualUsage, scePecentage])
-
-  useEffect(() => {
-    if (!avgPerMonthCost) {
-      return
-    }
-
-    const parsedSunrun = parseFloat(sunRunMonthlyCost)
-
-    if (!Number.isFinite(parsedSunrun) || parsedSunrun <= 0) {
-      setProjectedBills({ sunrunBills: [], sceBills: [] })
-      return
-    }
-
-    generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
-  }, [avgPerMonthCost, sunRunMonthlyCost, generateProjectedBills])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -377,9 +370,11 @@ const Calculator = () => {
       return
     }
 
-    if (rate && avgPerMonthCost && Number.isFinite(parsedSunrun) && parsedSunrun > 0) {
-      // Trigger the projected bills calculation with the SunRun start rate
-      generateProjectedBills(parseFloat(avgPerMonthCost), parsedSunrun)
+    const parsedAvgMonthly = avgPerMonthCost ? parseFloat(avgPerMonthCost) : NaN
+    const parsedRate = rate !== null ? parseFloat(rate) : NaN
+    const canProject = Number.isFinite(parsedRate) && Number.isFinite(parsedAvgMonthly) && Number.isFinite(parsedSunrun) && parsedSunrun > 0
+
+    if (canProject) {
       setSunrunProjectionStatus({
         type: 'success',
         message: 'Projection updated with your Sunrun monthly cost.'
@@ -403,7 +398,6 @@ const Calculator = () => {
     setProjectedFutureRateIncrease('0.00')
     setAvgPerMonthCost(null)
     setProjectedMonthlyBill(null)
-    setProjectedBills({ sunrunBills: [], sceBills: [] })
     setFieldErrors({})
     setSunrunProjectionStatus(null)
     setProjectionYears(DEFAULT_PROJECTION_YEARS)
@@ -414,18 +408,15 @@ const Calculator = () => {
       const sunrunBill = projectedBills.sunrunBills[index]
       const sceBill = projectedBills.sceBills[index]
 
-      if (!sunrunBill || !sceBill) {
+      if (!Number.isFinite(sunrunBill) || !Number.isFinite(sceBill)) {
         return null
       }
 
-      const sunrunValue = parseFloat(sunrunBill)
-      const sceValue = parseFloat(sceBill)
-
       return {
         year,
-        SunRun: sunrunValue,
-        SCE: sceValue,
-        Savings: sceValue - sunrunValue
+        SunRun: sunrunBill,
+        SCE: sceBill,
+        Savings: sceBill - sunrunBill
       }
     })
     .filter(Boolean), [projectedBills.sunrunBills, projectedBills.sceBills, yearLabels])
