@@ -50,10 +50,10 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-ink: #f6eee4;
-  --color-muted: #c7b5a5;
-  --color-soft: #2e2621;
-  --color-soft-strong: #3a3029;
+  --color-ink: #f7f0e8;
+  --color-muted: #d9c5b3;
+  --color-soft: #392f28;
+  --color-soft-strong: #453830;
   --color-accent: #f2845c;
   --color-accent-soft: rgba(242, 132, 92, 0.24);
   --color-accent-secondary: #49c5b3;
@@ -61,16 +61,16 @@
   --color-emerald: #9ed081;
   --color-clay: #d08b63;
   --shadow-soft: rgba(0, 0, 0, 0.35);
-  --color-pill-bg: rgba(58, 48, 40, 0.85);
-  --color-pill-text: #f5e8dc;
+  --color-pill-bg: rgba(68, 56, 47, 0.88);
+  --color-pill-text: #f6ece1;
   --shadow-pill: rgba(0, 0, 0, 0.38);
   --shadow-pill-hover: rgba(0, 0, 0, 0.45);
-  --color-card-border: rgba(124, 96, 72, 0.45);
-  --color-card-border-hover: rgba(242, 132, 92, 0.6);
-  --color-card-border-inner: rgba(124, 96, 72, 0.36);
-  --shadow-card: rgba(0, 0, 0, 0.5);
-  --shadow-card-hover: rgba(0, 0, 0, 0.6);
-  --color-surface-glow: rgba(242, 132, 92, 0.32);
+  --color-card-border: rgba(148, 118, 92, 0.55);
+  --color-card-border-hover: rgba(242, 132, 92, 0.65);
+  --color-card-border-inner: rgba(148, 118, 92, 0.4);
+  --shadow-card: rgba(0, 0, 0, 0.48);
+  --shadow-card-hover: rgba(0, 0, 0, 0.58);
+  --color-surface-glow: rgba(242, 132, 92, 0.36);
   --chart-grid-stroke: #473830;
   --chart-axis-line: #5a453a;
   --chart-axis-tick: #f0e5d8;
@@ -79,22 +79,22 @@
   --chart-reference-label: #f6b37c;
   --shadow-badge: rgba(0, 0, 0, 0.42);
   --badge-highlight: rgba(242, 132, 92, 0.38);
-  --surface-card-background: linear-gradient(135deg, rgba(48, 39, 33, 0.94), rgba(36, 29, 25, 0.96));
-  --form-control-background: rgba(44, 36, 31, 0.92);
-  --form-control-border: rgba(132, 101, 78, 0.6);
-  --form-control-focus-shadow: rgba(242, 132, 92, 0.26);
-  --reset-button-background: rgba(255, 255, 255, 0.08);
-  --reset-button-hover-background: rgba(255, 255, 255, 0.14);
-  --sunrun-input-background: linear-gradient(135deg, rgba(66, 53, 43, 0.8), rgba(40, 52, 50, 0.78));
-  --sunrun-input-border: rgba(132, 101, 78, 0.55);
-  --sunrun-focus-shadow: rgba(73, 197, 179, 0.26);
-  --bill-card-background: linear-gradient(135deg, rgba(48, 39, 33, 0.94), rgba(32, 37, 38, 0.96));
-  --bill-card-border: rgba(124, 96, 72, 0.5);
-  --bill-card-border-hover: rgba(124, 96, 72, 0.65);
-  --bill-card-shadow: rgba(0, 0, 0, 0.55);
-  --bill-card-shadow-hover: rgba(0, 0, 0, 0.66);
-  --bill-card-soft: rgba(120, 145, 165, 0.14);
-  --bill-card-glow: rgba(124, 96, 72, 0.32);
+  --surface-card-background: linear-gradient(135deg, rgba(58, 47, 40, 0.92), rgba(42, 34, 29, 0.95));
+  --form-control-background: rgba(54, 44, 37, 0.94);
+  --form-control-border: rgba(148, 118, 92, 0.62);
+  --form-control-focus-shadow: rgba(242, 132, 92, 0.32);
+  --reset-button-background: rgba(255, 255, 255, 0.12);
+  --reset-button-hover-background: rgba(255, 255, 255, 0.18);
+  --sunrun-input-background: linear-gradient(135deg, rgba(74, 60, 50, 0.86), rgba(46, 60, 58, 0.82));
+  --sunrun-input-border: rgba(148, 118, 92, 0.6);
+  --sunrun-focus-shadow: rgba(73, 197, 179, 0.32);
+  --bill-card-background: linear-gradient(135deg, rgba(62, 51, 43, 0.92), rgba(46, 54, 56, 0.9));
+  --bill-card-border: rgba(148, 118, 92, 0.58);
+  --bill-card-border-hover: rgba(148, 118, 92, 0.72);
+  --bill-card-shadow: rgba(0, 0, 0, 0.52);
+  --bill-card-shadow-hover: rgba(0, 0, 0, 0.62);
+  --bill-card-soft: rgba(148, 163, 184, 0.22);
+  --bill-card-glow: rgba(148, 118, 92, 0.36);
 }
 
 body {
