@@ -183,16 +183,13 @@ body::after {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 6px;
+  padding: 4px 6px;
   background: var(--app-switcher-bg);
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--app-switcher-border);
-  box-shadow: 0 14px 30px var(--app-switcher-shadow);
+  box-shadow: 0 12px 24px var(--app-switcher-shadow);
   backdrop-filter: blur(12px);
-  position: sticky;
-  top: clamp(16px, 4vw, 32px);
-  z-index: 5;
 }
 
 .app-switcher__button {
@@ -201,12 +198,12 @@ body::after {
   font: inherit;
   color: var(--app-switcher-color);
   cursor: pointer;
-  padding: 10px 16px;
-  border-radius: 14px;
+  padding: 8px 12px;
+  border-radius: 12px;
   display: grid;
   grid-template-columns: auto;
-  gap: 2px;
-  min-width: 140px;
+  gap: 1px;
+  min-width: 120px;
   text-align: left;
   transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease, color 0.3s ease,
     border-color 0.3s ease;
@@ -228,13 +225,13 @@ body::after {
 
 .app-switcher__button-label {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .app-switcher__button-description {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: inherit;
   opacity: 0.75;
 }
