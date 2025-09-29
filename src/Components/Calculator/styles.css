@@ -272,16 +272,21 @@ body {
   gap: 8px;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 14px 16px;
   font-size: 1rem;
   border-radius: 16px;
   border: 1px solid rgba(198, 168, 140, 0.42);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   background: rgba(248, 242, 236, 0.92);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 4px rgba(231, 111, 81, 0.18);
@@ -298,6 +303,7 @@ body {
 }
 
 .form-group input.input-error,
+.form-group select.input-error,
 .sunrun-input-row input.input-error {
   border-color: #dc2626;
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
@@ -1666,7 +1672,7 @@ button:hover::after {
   filter: drop-shadow(0 0 8px rgba(63, 200, 179, 0.35));
 }
 
-.recharts-line-SCE path {
+.recharts-line-Utility path {
   filter: drop-shadow(0 0 8px rgba(240, 138, 107, 0.3));
 }
 
@@ -1677,7 +1683,7 @@ button:hover::after {
   filter: drop-shadow(0 0 6px rgba(100, 215, 199, 0.35));
 }
 
-.recharts-line-SCE .recharts-dot {
+.recharts-line-Utility .recharts-dot {
   fill: #f08a6b !important;
   stroke: rgba(252, 224, 212, 0.9) !important;
   stroke-width: 2px;
@@ -1796,7 +1802,7 @@ button:hover::after {
   filter: drop-shadow(0 0 8px rgba(42, 157, 143, 0.35));
 }
 
-.recharts-line-SCE path {
+.recharts-line-Utility path {
   filter: drop-shadow(0 0 8px rgba(231, 111, 81, 0.32));
 }
 
@@ -1806,7 +1812,7 @@ button:hover::after {
   filter: drop-shadow(0 2px 6px rgba(42, 157, 143, 0.35));
 }
 
-.recharts-line-SCE .recharts-dot {
+.recharts-line-Utility .recharts-dot {
   stroke: rgba(242, 201, 183, 0.92);
   fill: #b04932;
   filter: drop-shadow(0 2px 6px rgba(231, 111, 81, 0.35));
