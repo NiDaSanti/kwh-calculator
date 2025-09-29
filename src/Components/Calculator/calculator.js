@@ -235,13 +235,23 @@ const FIELD_CONSTRAINTS = {
   }
 }
 
+const createEmptyProjection = () => ({
+  sunrunBills: [],
+  utilityBills: [],
+  sunrunRates: [],
+  utilityRates: [],
+  sunrunRateChanges: [],
+  utilityRateChanges: []
+})
+
 const computeProjectedBills = (
   initialBill,
   sunRunStartMonthlyCost,
   firstYearIncrease,
   ongoingIncrease,
   sunrunEscalation,
-  totalYears
+  totalYears,
+  monthlyUsageKwh
 ) => {
   if (
     !Number.isFinite(initialBill) ||
@@ -250,7 +260,7 @@ const computeProjectedBills = (
     sunRunStartMonthlyCost <= 0 ||
     totalYears <= 0
   ) {
-    return { sunrunBills: [], utilityBills: [] }
+    return createEmptyProjection()
   }
 
   const safeFirstYearIncrease = Number.isFinite(firstYearIncrease) ? firstYearIncrease : 0
@@ -274,7 +284,43 @@ const computeProjectedBills = (
     utilityBills.push(nextUtilityBill)
   }
 
-  return { sunrunBills, utilityBills }
+  const hasValidUsage = Number.isFinite(monthlyUsageKwh) && monthlyUsageKwh > 0
+  const computeRates = (bills) =>
+    bills.map((bill) => {
+      if (!hasValidUsage) {
+        return null
+      }
+
+      const rate = bill / monthlyUsageKwh
+      return Number.isFinite(rate) ? rate : null
+    })
+
+  const computeRateChanges = (rates) =>
+    rates.map((rate, index) => {
+      if (!Number.isFinite(rate) || index === 0) {
+        return null
+      }
+
+      const previous = rates[index - 1]
+
+      if (!Number.isFinite(previous) || previous === 0) {
+        return null
+      }
+
+      return ((rate - previous) / previous) * 100
+    })
+
+  const sunrunRates = computeRates(sunrunBills)
+  const utilityRates = computeRates(utilityBills)
+
+  return {
+    sunrunBills,
+    utilityBills,
+    sunrunRates,
+    utilityRates,
+    sunrunRateChanges: computeRateChanges(sunrunRates),
+    utilityRateChanges: computeRateChanges(utilityRates)
+  }
 }
 
 const currencyFormatter = (value) => {
@@ -391,6 +437,21 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const yearLabels = useMemo(
     () => generateYearLabels(projectionStartYear, projectionYears),
     [projectionStartYear, projectionYears]
+  )
+
+  const annualUsageNumber = useMemo(() => {
+    const parsed = typeof annualUsage === 'string' ? parseFloat(annualUsage) : Number(annualUsage)
+
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null
+    }
+
+    return parsed
+  }, [annualUsage])
+
+  const monthlyUsageKwh = useMemo(
+    () => (annualUsageNumber !== null ? annualUsageNumber / 12 : null),
+    [annualUsageNumber]
   )
 
   useEffect(() => {
@@ -574,23 +635,43 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     const sunrunStart = typeof sunRunMonthlyCost === 'string' ? parseFloat(sunRunMonthlyCost) : sunRunMonthlyCost
 
     if (!Number.isFinite(monthlyBill) || !Number.isFinite(sunrunStart) || sunrunStart <= 0) {
-      return { sunrunBills: [], utilityBills: [] }
+      return createEmptyProjection()
     }
 
     const parsedInitialIncrease = parseFloat(scePecentage)
     const parsedMinIncrease = parseFloat(projectedFutureRateIncrease)
     const parsedEscalation = parseFloat(sunrunEscalation)
 
-    return computeProjectedBills(
+    const projection = computeProjectedBills(
       monthlyBill,
       sunrunStart,
       Number.isNaN(parsedInitialIncrease) ? 0 : parsedInitialIncrease,
       Number.isNaN(parsedMinIncrease) ? 0 : parsedMinIncrease,
       Number.isNaN(parsedEscalation) ? DEFAULT_SUNRUN_ESCALATION : parsedEscalation,
-      yearLabels.length
+      yearLabels.length,
+      monthlyUsageKwh ?? null
     )
+
+    const {
+      sunrunBills,
+      utilityBills,
+      sunrunRates = [],
+      utilityRates = [],
+      sunrunRateChanges = [],
+      utilityRateChanges = []
+    } = projection
+
+    return {
+      sunrunBills,
+      utilityBills,
+      sunrunRates,
+      utilityRates,
+      sunrunRateChanges,
+      utilityRateChanges
+    }
   }, [
     avgPerMonthCost,
+    monthlyUsageKwh,
     projectedFutureRateIncrease,
     scePecentage,
     sunRunMonthlyCost,
@@ -699,6 +780,10 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     .map((year, index) => {
       const sunrunBill = projectedBills.sunrunBills[index]
       const utilityBill = projectedBills.utilityBills[index]
+      const sunrunRate = projectedBills.sunrunRates[index]
+      const utilityRate = projectedBills.utilityRates[index]
+      const sunrunRateChange = projectedBills.sunrunRateChanges[index]
+      const utilityRateChange = projectedBills.utilityRateChanges[index]
 
       if (!Number.isFinite(sunrunBill) || !Number.isFinite(utilityBill)) {
         return null
@@ -708,10 +793,22 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
         year,
         SunRun: sunrunBill,
         [UTILITY_DATA_KEY]: utilityBill,
-        Savings: utilityBill - sunrunBill
+        Savings: utilityBill - sunrunBill,
+        sunrunRate: Number.isFinite(sunrunRate) ? sunrunRate : null,
+        utilityRate: Number.isFinite(utilityRate) ? utilityRate : null,
+        sunrunRateChange: Number.isFinite(sunrunRateChange) ? sunrunRateChange : null,
+        utilityRateChange: Number.isFinite(utilityRateChange) ? utilityRateChange : null
       }
     })
-    .filter(Boolean), [projectedBills.sunrunBills, projectedBills.utilityBills, yearLabels])
+    .filter(Boolean), [
+    projectedBills.sunrunBills,
+    projectedBills.utilityBills,
+    projectedBills.sunrunRates,
+    projectedBills.utilityRates,
+    projectedBills.sunrunRateChanges,
+    projectedBills.utilityRateChanges,
+    yearLabels
+  ])
 
   useEffect(() => {
     setBrushRange(null)
@@ -772,13 +869,21 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       const utilityAnnual = item[UTILITY_DATA_KEY] * 12
       const diffAnnual = utilityAnnual - sunrunAnnual
       const cumulativeSavings = (acc[acc.length - 1]?.cumulativeSavings ?? 0) + diffAnnual
+      const sunrunRate = Number.isFinite(item.sunrunRate) ? item.sunrunRate : null
+      const utilityRate = Number.isFinite(item.utilityRate) ? item.utilityRate : null
+      const sunrunRateChange = Number.isFinite(item.sunrunRateChange) ? item.sunrunRateChange : null
+      const utilityRateChange = Number.isFinite(item.utilityRateChange) ? item.utilityRateChange : null
 
       acc.push({
         year: item.year,
         sunrunAnnual,
         utilityAnnual,
         diffAnnual,
-        cumulativeSavings
+        cumulativeSavings,
+        sunrunRate,
+        utilityRate,
+        sunrunRateChange,
+        utilityRateChange
       })
 
       return acc
@@ -850,8 +955,6 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const chargesNumber = charges ? parseFloat(charges) : null
   const usageNumber = usage ? parseFloat(usage) : null
   const avgPerMonthCostNumber = avgPerMonthCost ? parseFloat(avgPerMonthCost) : null
-  const annualUsageNumber = annualUsage ? parseFloat(annualUsage) : null
-  const monthlyUsageKwh = Number.isFinite(annualUsageNumber) ? annualUsageNumber / 12 : null
   const currentAnnualBill = Number.isFinite(chargesNumber) ? chargesNumber * 12 : null
   const projectedAnnualBill = projectedMonthlyBillNumber !== null ? projectedMonthlyBillNumber * 12 : null
   const sunrunAnnualCost = sunrunMonthlyCostNumber !== null ? sunrunMonthlyCostNumber * 12 : null
@@ -884,13 +987,21 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       : parsedSunrunEscalation
 
     const summarize = (definition) => {
-      const { sunrunBills, utilityBills } = computeProjectedBills(
+      const {
+        sunrunBills,
+        utilityBills,
+        sunrunRates = [],
+        utilityRates = [],
+        sunrunRateChanges = [],
+        utilityRateChanges = []
+      } = computeProjectedBills(
         initialBill,
         sunrunStart,
         definition.firstYear,
         definition.ongoing,
         safeSunrunEscalation,
-        yearLabels.length
+        yearLabels.length,
+        monthlyUsageKwh ?? null
       )
 
       if (sunrunBills.length === 0 || utilityBills.length === 0) {
@@ -902,6 +1013,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       const finalIndex = monthlyDiffs.length - 1
       const finalMonthlyDiff = monthlyDiffs[finalIndex]
 
+      const finalSunrunRate = sunrunRates[finalIndex]
+      const finalUtilityRate = utilityRates[finalIndex]
+
       return {
         ...definition,
         finalYear: yearLabels[finalIndex],
@@ -910,7 +1024,13 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
         cumulative,
         firstYearAnnualDiff: monthlyDiffs[0] * 12,
         finalSunrunBill: sunrunBills[finalIndex],
-        finalUtilityBill: utilityBills[finalIndex]
+        finalUtilityBill: utilityBills[finalIndex],
+        sunrunRates,
+        utilityRates,
+        sunrunRateChanges,
+        utilityRateChanges,
+        finalSunrunRate: Number.isFinite(finalSunrunRate) ? finalSunrunRate : null,
+        finalUtilityRate: Number.isFinite(finalUtilityRate) ? finalUtilityRate : null
       }
     }
 
@@ -946,7 +1066,8 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     scePecentage,
     sunrunEscalation,
     sunrunMonthlyCostNumber,
-    yearLabels
+    yearLabels,
+    monthlyUsageKwh
   ])
 
   const parsedProjectedIncrease = parseFloat(scePecentage)
