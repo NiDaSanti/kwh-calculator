@@ -17,6 +17,44 @@ const UTILITY_OPTIONS = [
 
 const UTILITY_IDS = new Set(UTILITY_OPTIONS.map((option) => option.id))
 
+const THEME_OPTIONS = {
+  LIGHT: 'light',
+  DARK: 'dark'
+}
+
+const readStoredTheme = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const storedTheme = window.localStorage.getItem('theme')
+
+  if (storedTheme && Object.values(THEME_OPTIONS).includes(storedTheme)) {
+    return storedTheme
+  }
+
+  return null
+}
+
+const getInitialTheme = () => {
+  const storedTheme = readStoredTheme()
+
+  if (storedTheme) {
+    return storedTheme
+  }
+
+  if (typeof window === 'undefined') {
+    return THEME_OPTIONS.LIGHT
+  }
+
+  if (window.matchMedia) {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    return prefersDark ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT
+  }
+
+  return THEME_OPTIONS.LIGHT
+}
+
 const getInitialUtility = () => {
   if (typeof window === 'undefined') {
     return 'sce'
@@ -44,6 +82,8 @@ const getInitialUtility = () => {
 
 function App() {
   const [activeUtility, setActiveUtility] = useState(getInitialUtility)
+  const [theme, setTheme] = useState(getInitialTheme)
+  const [hasStoredThemePreference, setHasStoredThemePreference] = useState(() => readStoredTheme() !== null)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -59,6 +99,52 @@ function App() {
 
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined
+    }
+
+    const root = document.documentElement
+    root.dataset.theme = theme
+
+    return undefined
+  }, [theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasStoredThemePreference) {
+      return undefined
+    }
+
+    window.localStorage.setItem('theme', theme)
+
+    return undefined
+  }, [theme, hasStoredThemePreference])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || hasStoredThemePreference) {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (event) => {
+      setTheme(event.matches ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange)
+
+      return () => {
+        mediaQuery.removeEventListener('change', handleChange)
+      }
+    }
+
+    mediaQuery.addListener(handleChange)
+
+    return () => {
+      mediaQuery.removeListener(handleChange)
+    }
+  }, [hasStoredThemePreference])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -88,10 +174,35 @@ function App() {
   }, [activeUtility])
 
   const utilityTabs = useMemo(() => UTILITY_OPTIONS, [])
+  const toggleTheme = () => {
+    setHasStoredThemePreference(true)
+    setTheme((prev) =>
+      prev === THEME_OPTIONS.DARK ? THEME_OPTIONS.LIGHT : THEME_OPTIONS.DARK
+    )
+  }
 
   return (
     <div className="app-shell">
       <div className="app-shell__inner">
+        <div className="app-toolbar">
+          <button
+            type="button"
+            className="app-theme-toggle"
+            onClick={toggleTheme}
+            aria-pressed={theme === THEME_OPTIONS.DARK}
+            aria-label={`Switch to ${
+              theme === THEME_OPTIONS.DARK ? 'light' : 'dark'
+            } mode`}
+          >
+            <span className="app-theme-toggle__icon" aria-hidden="true">
+              {theme === THEME_OPTIONS.DARK ? '☀️' : '🌙'}
+            </span>
+            <span className="app-theme-toggle__label">
+              {theme === THEME_OPTIONS.DARK ? 'Switch to light' : 'Switch to dark'}
+            </span>
+          </button>
+        </div>
+
         <div className="app-switcher" role="tablist" aria-label="Utility calculators">
           {utilityTabs.map((option) => {
             const isActive = option.id === activeUtility
