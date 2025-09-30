@@ -42,14 +42,19 @@ const SHAREABLE_FIELD_KEYS = [
   'charges',
   'usage',
   'annualUsage',
-  'scePecentage',
+  'scePercentage',
   'projectedFutureRateIncrease',
-  'sunRunMonthlyCost',
+  'sunrunMonthlyCost',
   'sunrunStartingRate',
   'sunrunEscalation',
   'projectionYears',
   'billingMonths'
 ]
+
+const SHAREABLE_FIELD_ALIASES = {
+  scePecentage: 'scePercentage',
+  sunRunMonthlyCost: 'sunrunMonthlyCost'
+}
 
 const DEFAULT_UTILITY_COLORS = {
   gradientStops: [
@@ -160,24 +165,34 @@ const loadCalculatorParamsFromSearch = () => {
 
     const result = {}
 
-    SHAREABLE_FIELD_KEYS.forEach((key) => {
-      if (Object.prototype.hasOwnProperty.call(parsed, key)) {
-        if (key === 'projectionYears') {
-          const numericValue = Number(parsed[key])
+    Object.entries(parsed).forEach(([rawKey, rawValue]) => {
+      const key = SHAREABLE_FIELD_ALIASES[rawKey] ?? rawKey
 
-          if (Number.isFinite(numericValue)) {
-            result.projectionYears = clampProjectionYears(numericValue)
-          }
-        } else if (key === 'billingMonths') {
-          const numericValue = Number(parsed[key])
-
-          if (Number.isFinite(numericValue)) {
-            result.billingMonths = clampBillingMonths(numericValue).toString()
-          }
-        } else {
-          result[key] = coerceToString(parsed[key])
-        }
+      if (!SHAREABLE_FIELD_KEYS.includes(key)) {
+        return
       }
+
+      if (key === 'projectionYears') {
+        const numericValue = Number(rawValue)
+
+        if (Number.isFinite(numericValue)) {
+          result.projectionYears = clampProjectionYears(numericValue)
+        }
+
+        return
+      }
+
+      if (key === 'billingMonths') {
+        const numericValue = Number(rawValue)
+
+        if (Number.isFinite(numericValue)) {
+          result.billingMonths = clampBillingMonths(numericValue).toString()
+        }
+
+        return
+      }
+
+      result[key] = coerceToString(rawValue)
     })
 
     return Object.keys(result).length > 0 ? result : null
@@ -191,9 +206,9 @@ const buildShareableCalculatorParams = (state, defaults) => {
     charges: coerceToString(state.charges),
     usage: coerceToString(state.usage),
     annualUsage: coerceToString(state.annualUsage),
-    scePecentage: coerceToString(state.scePecentage),
+    scePercentage: coerceToString(state.scePercentage),
     projectedFutureRateIncrease: coerceToString(state.projectedFutureRateIncrease),
-    sunRunMonthlyCost: coerceToString(state.sunRunMonthlyCost),
+    sunrunMonthlyCost: coerceToString(state.sunrunMonthlyCost),
     sunrunStartingRate: coerceToString(state.sunrunStartingRate),
     sunrunEscalation: coerceToString(state.sunrunEscalation),
     projectionYears: clampProjectionYears(state.projectionYears),
@@ -208,9 +223,9 @@ const buildShareableCalculatorParams = (state, defaults) => {
     nextParams.charges !== '' ||
     nextParams.usage !== '' ||
     nextParams.annualUsage !== '' ||
-    nextParams.sunRunMonthlyCost !== '' ||
+    nextParams.sunrunMonthlyCost !== '' ||
     nextParams.sunrunStartingRate !== '' ||
-    (nextParams.scePecentage !== '' && nextParams.scePecentage !== coerceToString(defaultProjectionIncrease)) ||
+    (nextParams.scePercentage !== '' && nextParams.scePercentage !== coerceToString(defaultProjectionIncrease)) ||
     (nextParams.projectedFutureRateIncrease !== '' &&
       nextParams.projectedFutureRateIncrease !== coerceToString(defaultBaselineIncrease)) ||
     (nextParams.sunrunEscalation !== '' &&
@@ -242,7 +257,7 @@ const FIELD_CONSTRAINTS = {
     max: MAX_BILLING_MONTHS,
     helper: 'Choose how many billing months to include in annual projections.'
   },
-  scePecentage: {
+  scePercentage: {
     min: 0,
     max: 50,
     helper: 'Use a rate increase between 0% and 50% to keep projections realistic.'
@@ -252,7 +267,7 @@ const FIELD_CONSTRAINTS = {
     max: 50,
     helper: 'Use a baseline increase between 0% and 50% for ongoing projections.'
   },
-  sunRunMonthlyCost: {
+  sunrunMonthlyCost: {
     min: 0,
     max: 5000,
     helper: 'Enter a Sunrun monthly cost between $0 and $5,000.'
@@ -531,12 +546,12 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [billingMonths, setBillingMonths] = useState(
     () => initialCalculatorParams?.billingMonths ?? DEFAULT_BILLING_MONTHS.toString()
   )
-  const [scePecentage, setScePecentage] = useState(() =>
-    initialCalculatorParams?.scePecentage ?? initialUtilityConfig.defaults.projectedIncrease
+  const [scePercentage, setScePercentage] = useState(() =>
+    initialCalculatorParams?.scePercentage ?? initialCalculatorParams?.scePecentage ?? initialUtilityConfig.defaults.projectedIncrease
   )
   const [projectedMonthlyBill, setProjectedMonthlyBill] = useState(null)
-  const [sunRunMonthlyCost, setSunRunMonthlyCost] = useState(() =>
-    initialCalculatorParams?.sunRunMonthlyCost ?? ''
+  const [sunrunMonthlyCost, setSunrunMonthlyCost] = useState(() =>
+    initialCalculatorParams?.sunrunMonthlyCost ?? initialCalculatorParams?.sunRunMonthlyCost ?? ''
   )
   const [sunrunStartingRate, setSunrunStartingRate] = useState(() =>
     initialCalculatorParams?.sunrunStartingRate ?? ''
@@ -630,7 +645,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     }
 
     if (previousUtilityRef.current !== null && previousUtilityRef.current !== selectedUtility) {
-      setScePecentage(config.defaults.projectedIncrease)
+      setScePercentage(config.defaults.projectedIncrease)
       setProjectedFutureRateIncrease(config.defaults.baselineIncrease)
       setSunrunEscalation(config.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
     }
@@ -651,9 +666,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
           usage,
           annualUsage,
           billingMonths,
-          scePecentage,
+          scePercentage,
           projectedFutureRateIncrease,
-          sunRunMonthlyCost,
+          sunrunMonthlyCost,
           sunrunStartingRate,
           sunrunEscalation,
           projectionYears
@@ -701,9 +716,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     initialUtilityConfig.defaults,
     projectedFutureRateIncrease,
     projectionYears,
-    scePecentage,
+    scePercentage,
     selectedUtility,
-    sunRunMonthlyCost,
+    sunrunMonthlyCost,
     sunrunStartingRate,
     sunrunEscalation,
     usage
@@ -789,7 +804,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
     if (chargesValue > 0 && usageValues > 0) {
       const calculatedRate = chargesValue / usageValues
-      const roundedRate = Math.floor(calculatedRate * 100) / 100
+      const roundedRate = Math.round(calculatedRate * 100) / 100
       setRate(roundedRate.toFixed(2))
     } else {
       setRate(null)
@@ -810,15 +825,15 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
       const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
 
-      if (nextCost !== sunRunMonthlyCost) {
-        setSunRunMonthlyCost(nextCost)
-        setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', nextCost))
+      if (nextCost !== sunrunMonthlyCost) {
+        setSunrunMonthlyCost(nextCost)
+        setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', nextCost))
       }
 
       return
     }
 
-    const parsedCost = parseFloat(sunRunMonthlyCost)
+    const parsedCost = parseFloat(sunrunMonthlyCost)
 
     if (!Number.isFinite(parsedCost)) {
       return
@@ -833,7 +848,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     }
   }, [
     monthlyUsageKwh,
-    sunRunMonthlyCost,
+    sunrunMonthlyCost,
     sunrunStartingRate,
     setFieldError,
     validateField
@@ -841,13 +856,13 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
   const projectedBills = useMemo(() => {
     const monthlyBill = typeof avgPerMonthCost === 'string' ? parseFloat(avgPerMonthCost) : avgPerMonthCost
-    const sunrunStart = typeof sunRunMonthlyCost === 'string' ? parseFloat(sunRunMonthlyCost) : sunRunMonthlyCost
+    const sunrunStart = typeof sunrunMonthlyCost === 'string' ? parseFloat(sunrunMonthlyCost) : sunrunMonthlyCost
 
     if (!Number.isFinite(monthlyBill) || !Number.isFinite(sunrunStart) || sunrunStart <= 0) {
       return createEmptyProjection()
     }
 
-    const parsedInitialIncrease = parseFloat(scePecentage)
+    const parsedInitialIncrease = parseFloat(scePercentage)
     const parsedMinIncrease = parseFloat(projectedFutureRateIncrease)
     const parsedEscalation = parseFloat(sunrunEscalation)
 
@@ -882,14 +897,14 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     avgPerMonthCost,
     monthlyUsageKwh,
     projectedFutureRateIncrease,
-    scePecentage,
-    sunRunMonthlyCost,
+    scePercentage,
+    sunrunMonthlyCost,
     sunrunEscalation,
     yearLabels.length
   ])
 
   useEffect(() => {
-    const parsedPercentage = parseFloat(scePecentage)
+    const parsedPercentage = parseFloat(scePercentage)
     const parsedRate = rate !== null ? parseFloat(rate) : null
 
     if (
@@ -908,7 +923,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       setAvgPerMonthCost(null)
       setProjectedMonthlyBill(null)
     }
-  }, [annualUsageNumber, billingMonthsNumber, rate, scePecentage])
+  }, [annualUsageNumber, billingMonthsNumber, rate, scePercentage])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -930,7 +945,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       charges,
       usage,
       annualUsage,
-      scePecentage,
+      scePercentage,
       projectedFutureRateIncrease
     })
 
@@ -941,11 +956,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     calculateRate()
   }
 
-  const handleSunRunMonthlyCost = (e) => {
-    const parsedSunrun = parseFloat(sunRunMonthlyCost)
+  const handleSunrunMonthlyCost = () => {
+    const parsedSunrun = parseFloat(sunrunMonthlyCost)
 
     const isValid = validateFields({
-      sunRunMonthlyCost,
+      sunrunMonthlyCost,
       sunrunStartingRate,
       sunrunEscalation
     })
@@ -979,8 +994,8 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     setCharges('')
     setUsage('')
     setAnnualUsage('')
-    setScePecentage(utilityConfig.defaults.projectedIncrease)
-    setSunRunMonthlyCost('')
+    setScePercentage(utilityConfig.defaults.projectedIncrease)
+    setSunrunMonthlyCost('')
     setSunrunStartingRate('')
     setSunrunEscalation(utilityConfig.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
     lastSunrunInputRef.current = 'cost'
@@ -1120,7 +1135,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const currentRateNumber = rate !== null ? parseFloat(rate) : null
 
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
-  const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
+  const sunrunMonthlyCostNumber = sunrunMonthlyCost ? parseFloat(sunrunMonthlyCost) : null
   const sunrunStartingRateNumber = sunrunStartingRate ? parseFloat(sunrunStartingRate) : null
   const sunrunEscalationNumber = sunrunEscalation ? parseFloat(sunrunEscalation) : null
   const effectiveSunrunEscalation = Number.isFinite(sunrunEscalationNumber)
@@ -1185,7 +1200,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     ? `${projectionLabel} ${hasPositiveTotalSavings ? 'saved total' : 'additional cost'}`.trim()
     : ''
 
-  const baseRateCaption = `Uses today’s bill with your projected ${scePecentage || 0}% annual increase.`
+  const baseRateCaption = `Uses today’s bill with your projected ${scePercentage || 0}% annual increase.`
   const utilityRateNotes = []
   const sunrunRateNotes = []
 
@@ -1267,7 +1282,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       return []
     }
 
-    const parsedProjectedIncrease = parseFloat(scePecentage)
+    const parsedProjectedIncrease = parseFloat(scePercentage)
     const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
     const parsedSunrunEscalation = parseFloat(sunrunEscalation)
     const firstYearIncrease = Number.isNaN(parsedProjectedIncrease) ? 0 : parsedProjectedIncrease
@@ -1354,14 +1369,14 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     avgPerMonthCost,
     billingMonthsNumber,
     projectedFutureRateIncrease,
-    scePecentage,
+    scePercentage,
     sunrunEscalation,
     sunrunMonthlyCostNumber,
     yearLabels,
     monthlyUsageKwh
   ])
 
-  const parsedProjectedIncrease = parseFloat(scePecentage)
+  const parsedProjectedIncrease = parseFloat(scePercentage)
   const parsedBaselineIncrease = parseFloat(projectedFutureRateIncrease)
   const hasProjectedIncrease = !Number.isNaN(parsedProjectedIncrease)
   const hasBaselineIncrease = !Number.isNaN(parsedBaselineIncrease)
@@ -1402,7 +1417,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   }
 
 
-  const projectedIncreaseDisplay = formatPercentage(Number.parseFloat(scePecentage))
+  const projectedIncreaseDisplay = formatPercentage(Number.parseFloat(scePercentage))
 
   const animationTriggerKey = useMemo(() => [
     rate ?? 'null',
@@ -1797,21 +1812,21 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
               <div className="form-group">
                 <label><PercentIcon /> Rate change percentage</label>
                 <input
-                  className={fieldErrors.scePecentage ? 'input-error' : ''}
+                  className={fieldErrors.scePercentage ? 'input-error' : ''}
                   type="number"
                   step="0.01"
-                  min={FIELD_CONSTRAINTS.scePecentage.min}
-                  max={FIELD_CONSTRAINTS.scePecentage.max}
-                  value={scePecentage}
+                  min={FIELD_CONSTRAINTS.scePercentage.min}
+                  max={FIELD_CONSTRAINTS.scePercentage.max}
+                  value={scePercentage}
                   onChange={(e) => {
                     const { value } = e.target
-                    setScePecentage(value)
-                    setFieldError('scePecentage', validateField('scePecentage', value))
+                    setScePercentage(value)
+                    setFieldError('scePercentage', validateField('scePercentage', value))
                   }}
                   placeholder="Projected annual increase"
                   required
                 />
-                <p className={`input-helper ${fieldErrors.scePecentage ? 'input-helper--error' : ''}`}>{getHelperText('scePecentage')}</p>
+                <p className={`input-helper ${fieldErrors.scePercentage ? 'input-helper--error' : ''}`}>{getHelperText('scePercentage')}</p>
               </div>
 
               <div className="form-group">
@@ -2020,8 +2035,8 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                           if (Number.isFinite(parsedRate)) {
                             const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
 
-                            setSunRunMonthlyCost(nextCost)
-                            setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', nextCost))
+                            setSunrunMonthlyCost(nextCost)
+                            setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', nextCost))
                           }
                         }
 
@@ -2034,17 +2049,17 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
                     <input
                       id="sunrun-rate"
-                      className={fieldErrors.sunRunMonthlyCost ? 'input-error' : ''}
+                      className={fieldErrors.sunrunMonthlyCost ? 'input-error' : ''}
                       type="number"
                       step="0.01"
-                      min={FIELD_CONSTRAINTS.sunRunMonthlyCost.min}
-                      max={FIELD_CONSTRAINTS.sunRunMonthlyCost.max}
-                      value={sunRunMonthlyCost}
+                      min={FIELD_CONSTRAINTS.sunrunMonthlyCost.min}
+                      max={FIELD_CONSTRAINTS.sunrunMonthlyCost.max}
+                      value={sunrunMonthlyCost}
                       onChange={(e) => {
                         const { value } = e.target
                         lastSunrunInputRef.current = 'cost'
-                        setSunRunMonthlyCost(value)
-                        setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
+                        setSunrunMonthlyCost(value)
+                        setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', value))
 
                         if (value === '') {
                           setSunrunStartingRate('')
@@ -2090,14 +2105,14 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   <p className={`input-helper ${fieldErrors.sunrunStartingRate ? 'input-helper--error' : ''}`}>
                     {getHelperText('sunrunStartingRate')}
                   </p>
-                  <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>
-                    {getHelperText('sunRunMonthlyCost')}
+                  <p className={`input-helper ${fieldErrors.sunrunMonthlyCost ? 'input-helper--error' : ''}`}>
+                    {getHelperText('sunrunMonthlyCost')}
                   </p>
                   <p className={`input-helper ${fieldErrors.sunrunEscalation ? 'input-helper--error' : ''}`}>
                     {getHelperText('sunrunEscalation')}
                   </p>
                 </div>
-                <button className="sunrun-calculate-btn" onClick={handleSunRunMonthlyCost} type="button">Update projection</button>
+                <button className="sunrun-calculate-btn" onClick={handleSunrunMonthlyCost} type="button">Update projection</button>
                 {sunrunProjectionStatus?.message && (
                   <p className={`input-helper ${sunrunProjectionStatus.type === 'error' ? 'input-helper--error' : ''}`}>
                     {sunrunProjectionStatus.message}
@@ -2292,7 +2307,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     </span>
                     <p className="snapshot-tile__caption">
                       {projectedAnnualBill !== null
-                        ? `Reflects your ${scePecentage || 0}% increase assumption applied to today's bill.`
+                        ? `Reflects your ${scePercentage || 0}% increase assumption applied to today's bill.`
                         : "Provide a projected increase percentage to forecast next year's bill."}
                     </p>
                   </div>
