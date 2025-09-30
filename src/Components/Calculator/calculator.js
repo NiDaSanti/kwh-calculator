@@ -31,6 +31,10 @@ import './styles.css'  // Importing the updated CSS file
 const DEFAULT_PROJECTION_YEARS = 10
 const MIN_PROJECTION_YEARS = 5
 const MAX_PROJECTION_YEARS = 20
+const DEFAULT_BILLING_MONTHS = 12
+const MIN_BILLING_MONTHS = 1
+const MAX_BILLING_MONTHS = 12
+const BILLING_MONTH_OPTIONS = Array.from({ length: MAX_BILLING_MONTHS }, (_, index) => index + 1)
 const DEFAULT_SUNRUN_ESCALATION = 3.5
 const UTILITY_DATA_KEY = 'Utility'
 const CALCULATOR_QUERY_KEY = 'calculator'
@@ -42,7 +46,8 @@ const SHAREABLE_FIELD_KEYS = [
   'projectedFutureRateIncrease',
   'sunRunMonthlyCost',
   'sunrunEscalation',
-  'projectionYears'
+  'projectionYears',
+  'billingMonths'
 ]
 
 const DEFAULT_UTILITY_COLORS = {
@@ -117,6 +122,14 @@ const clampProjectionYears = (value) => {
   return Math.min(Math.max(Math.round(value), MIN_PROJECTION_YEARS), MAX_PROJECTION_YEARS)
 }
 
+const clampBillingMonths = (value) => {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_BILLING_MONTHS
+  }
+
+  return Math.min(Math.max(Math.round(value), MIN_BILLING_MONTHS), MAX_BILLING_MONTHS)
+}
+
 const coerceToString = (value) => {
   if (value == null) {
     return ''
@@ -154,6 +167,12 @@ const loadCalculatorParamsFromSearch = () => {
           if (Number.isFinite(numericValue)) {
             result.projectionYears = clampProjectionYears(numericValue)
           }
+        } else if (key === 'billingMonths') {
+          const numericValue = Number(parsed[key])
+
+          if (Number.isFinite(numericValue)) {
+            result.billingMonths = clampBillingMonths(numericValue).toString()
+          }
         } else {
           result[key] = coerceToString(parsed[key])
         }
@@ -175,7 +194,8 @@ const buildShareableCalculatorParams = (state, defaults) => {
     projectedFutureRateIncrease: coerceToString(state.projectedFutureRateIncrease),
     sunRunMonthlyCost: coerceToString(state.sunRunMonthlyCost),
     sunrunEscalation: coerceToString(state.sunrunEscalation),
-    projectionYears: clampProjectionYears(state.projectionYears)
+    projectionYears: clampProjectionYears(state.projectionYears),
+    billingMonths: clampBillingMonths(Number(state.billingMonths ?? DEFAULT_BILLING_MONTHS)).toString()
   }
 
   const defaultProjectionIncrease = defaults?.projectedIncrease ?? ''
@@ -192,7 +212,8 @@ const buildShareableCalculatorParams = (state, defaults) => {
       nextParams.projectedFutureRateIncrease !== coerceToString(defaultBaselineIncrease)) ||
     (nextParams.sunrunEscalation !== '' &&
       nextParams.sunrunEscalation !== coerceToString(defaultSunrunEscalation)) ||
-    nextParams.projectionYears !== DEFAULT_PROJECTION_YEARS
+    nextParams.projectionYears !== DEFAULT_PROJECTION_YEARS ||
+    nextParams.billingMonths !== DEFAULT_BILLING_MONTHS.toString()
 
   return hasMeaningfulData ? nextParams : null
 }
@@ -212,6 +233,11 @@ const FIELD_CONSTRAINTS = {
     min: 0,
     max: 240000,
     helper: 'Enter annual usage between 0 and 240,000 kWh.'
+  },
+  billingMonths: {
+    min: MIN_BILLING_MONTHS,
+    max: MAX_BILLING_MONTHS,
+    helper: 'Choose how many billing months to include in annual projections.'
   },
   scePecentage: {
     min: 0,
@@ -386,7 +412,7 @@ const buildRateCallout = (entry, rateKey, changeKey) => {
   return `${entry.year}: ${formatRateDisplay(rateValue)} / kWh${changeDisplay}`
 }
 
-const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) => {
+const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors, billingMonths }) => {
   if (!active || !payload || payload.length === 0) {
     return null
   }
@@ -412,6 +438,8 @@ const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) =>
 
     return accentColors?.[item.dataKey] ?? item.color ?? item.stroke ?? undefined
   }
+
+  const monthsPerYear = clampBillingMonths(Number(billingMonths))
 
   return (
     <div className="chart-tooltip">
@@ -467,7 +495,7 @@ const ChartTooltip = ({ active, payload, label, utilityLabel, accentColors }) =>
       {savings?.value != null && (
         <div className="chart-tooltip__savings">
           <span>{savings.value >= 0 ? 'Yearly savings' : 'Yearly additional cost'}</span>
-          <strong>${Math.abs(savings.value * 12).toFixed(2)}</strong>
+          <strong>${Math.abs(savings.value * monthsPerYear).toFixed(2)}</strong>
         </div>
       )}
     </div>
@@ -481,6 +509,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [charges, setCharges] = useState(() => initialCalculatorParams?.charges ?? '')
   const [usage, setUsage] = useState(() => initialCalculatorParams?.usage ?? '')
   const [annualUsage, setAnnualUsage] = useState(() => initialCalculatorParams?.annualUsage ?? '')
+  const [billingMonths, setBillingMonths] = useState(
+    () => initialCalculatorParams?.billingMonths ?? DEFAULT_BILLING_MONTHS.toString()
+  )
   const [scePecentage, setScePecentage] = useState(() =>
     initialCalculatorParams?.scePecentage ?? initialUtilityConfig.defaults.projectedIncrease
   )
@@ -540,6 +571,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     [projectionStartYear, projectionYears]
   )
 
+  const billingMonthsNumber = useMemo(
+    () => clampBillingMonths(Number(billingMonths)),
+    [billingMonths]
+  )
+
   const annualUsageNumber = useMemo(() => {
     const parsed = typeof annualUsage === 'string' ? parseFloat(annualUsage) : Number(annualUsage)
 
@@ -551,8 +587,8 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   }, [annualUsage])
 
   const monthlyUsageKwh = useMemo(
-    () => (annualUsageNumber !== null ? annualUsageNumber / 12 : null),
-    [annualUsageNumber]
+    () => (annualUsageNumber !== null ? annualUsageNumber / billingMonthsNumber : null),
+    [annualUsageNumber, billingMonthsNumber]
   )
 
   useEffect(() => {
@@ -589,6 +625,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
           charges,
           usage,
           annualUsage,
+          billingMonths,
           scePecentage,
           projectedFutureRateIncrease,
           sunRunMonthlyCost,
@@ -633,6 +670,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     }
   }, [
     annualUsage,
+    billingMonths,
     charges,
     initialUtilityConfig.defaults,
     projectedFutureRateIncrease,
@@ -784,8 +822,13 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     const parsedPercentage = parseFloat(scePecentage)
     const parsedRate = rate !== null ? parseFloat(rate) : null
 
-    if (parsedRate && annualUsage > 0 && !Number.isNaN(parsedPercentage)) {
-      const avgMonthlyBill = (annualUsage * parsedRate) / 12
+    if (
+      Number.isFinite(parsedRate) &&
+      annualUsageNumber !== null &&
+      billingMonthsNumber > 0 &&
+      Number.isFinite(parsedPercentage)
+    ) {
+      const avgMonthlyBill = (annualUsageNumber * parsedRate) / billingMonthsNumber
       const projectedFutureAvg = avgMonthlyBill * (parsedPercentage / 100)
       const totalProjectedMontlyBill = avgMonthlyBill + projectedFutureAvg
 
@@ -795,7 +838,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       setAvgPerMonthCost(null)
       setProjectedMonthlyBill(null)
     }
-  }, [rate, annualUsage, scePecentage])
+  }, [annualUsageNumber, billingMonthsNumber, rate, scePecentage])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -935,10 +978,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       <ChartTooltip
         utilityLabel={utilityShortName}
         accentColors={tooltipAccentColors}
+        billingMonths={billingMonthsNumber}
         {...tooltipProps}
       />
     ),
-    [tooltipAccentColors, utilityShortName]
+    [billingMonthsNumber, tooltipAccentColors, utilityShortName]
   )
 
   const brushWindowLabel = useMemo(() => {
@@ -965,9 +1009,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       return []
     }
 
+    const monthsPerYear = billingMonthsNumber
+
     return chartData.reduce((acc, item) => {
-      const sunrunAnnual = item.SunRun * 12
-      const utilityAnnual = item[UTILITY_DATA_KEY] * 12
+      const sunrunAnnual = item.SunRun * monthsPerYear
+      const utilityAnnual = item[UTILITY_DATA_KEY] * monthsPerYear
       const diffAnnual = utilityAnnual - sunrunAnnual
       const cumulativeSavings = (acc[acc.length - 1]?.cumulativeSavings ?? 0) + diffAnnual
       const sunrunRate = Number.isFinite(item.sunrunRate) ? item.sunrunRate : null
@@ -989,7 +1035,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
       return acc
     }, [])
-  }, [chartData])
+  }, [billingMonthsNumber, chartData])
 
   const nextYearBreakdown = yearlyBreakdown.length > 1 ? yearlyBreakdown[1] : null
   const finalBreakdownEntry = yearlyBreakdown.length > 0 ? yearlyBreakdown[yearlyBreakdown.length - 1] : null
@@ -1006,12 +1052,18 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const effectiveSunrunEscalation = Number.isFinite(sunrunEscalationNumber)
     ? sunrunEscalationNumber
     : DEFAULT_SUNRUN_ESCALATION
+  const monthsPerYear = billingMonthsNumber
   const monthlyDifference = projectedMonthlyBillNumber !== null && sunrunMonthlyCostNumber > 0
     ? projectedMonthlyBillNumber - sunrunMonthlyCostNumber
     : null
-  const firstYearDifference = chartData.length > 0 ? chartData[0].Savings * 12 : null
-  const finalYearDifference = chartData.length > 0 ? chartData[chartData.length - 1].Savings * 12 : null
-  const fiveYearDifference = chartData.length > 0 ? chartData.slice(0, 5).reduce((acc, item) => acc + item.Savings * 12, 0) : null
+  const firstYearDifference =
+    chartData.length > 0 ? chartData[0].Savings * monthsPerYear : null
+  const finalYearDifference =
+    chartData.length > 0 ? chartData[chartData.length - 1].Savings * monthsPerYear : null
+  const fiveYearDifference =
+    chartData.length > 0
+      ? chartData.slice(0, 5).reduce((acc, item) => acc + item.Savings * monthsPerYear, 0)
+      : null
   const cumulativeProjectionDifference = yearlyBreakdown.length > 0
     ? yearlyBreakdown[yearlyBreakdown.length - 1].cumulativeSavings
     : null
@@ -1117,9 +1169,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const chargesNumber = charges ? parseFloat(charges) : null
   const usageNumber = usage ? parseFloat(usage) : null
   const avgPerMonthCostNumber = avgPerMonthCost ? parseFloat(avgPerMonthCost) : null
-  const currentAnnualBill = Number.isFinite(chargesNumber) ? chargesNumber * 12 : null
-  const projectedAnnualBill = projectedMonthlyBillNumber !== null ? projectedMonthlyBillNumber * 12 : null
-  const sunrunAnnualCost = sunrunMonthlyCostNumber !== null ? sunrunMonthlyCostNumber * 12 : null
+  const currentAnnualBill = Number.isFinite(chargesNumber) ? chargesNumber * monthsPerYear : null
+  const projectedAnnualBill =
+    projectedMonthlyBillNumber !== null ? projectedMonthlyBillNumber * monthsPerYear : null
+  const sunrunAnnualCost =
+    sunrunMonthlyCostNumber !== null ? sunrunMonthlyCostNumber * monthsPerYear : null
   const projectedPlanAnnualSavings = projectedAnnualBill !== null && sunrunAnnualCost !== null
     ? projectedAnnualBill - sunrunAnnualCost
     : null
@@ -1171,7 +1225,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       }
 
       const monthlyDiffs = utilityBills.map((bill, index) => bill - sunrunBills[index])
-      const cumulative = monthlyDiffs.reduce((acc, diff) => acc + diff * 12, 0)
+      const cumulative = monthlyDiffs.reduce((acc, diff) => acc + diff * monthsPerYear, 0)
       const finalIndex = monthlyDiffs.length - 1
       const finalMonthlyDiff = monthlyDiffs[finalIndex]
 
@@ -1182,9 +1236,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
         ...definition,
         finalYear: yearLabels[finalIndex],
         finalMonthlyDiff,
-        finalAnnualDiff: finalMonthlyDiff * 12,
+        finalAnnualDiff: finalMonthlyDiff * monthsPerYear,
         cumulative,
-        firstYearAnnualDiff: monthlyDiffs[0] * 12,
+        firstYearAnnualDiff: monthlyDiffs[0] * monthsPerYear,
         finalSunrunBill: sunrunBills[finalIndex],
         finalUtilityBill: utilityBills[finalIndex],
         sunrunRates,
@@ -1224,6 +1278,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     ].map(summarize).filter(Boolean)
   }, [
     avgPerMonthCost,
+    billingMonthsNumber,
     projectedFutureRateIncrease,
     scePecentage,
     sunrunEscalation,
@@ -1627,6 +1682,28 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                 />
                 <p className={`input-helper ${fieldErrors.annualUsage ? 'input-helper--error' : ''}`}>{getHelperText('annualUsage')}</p>
               </div>
+
+              <div className="form-group">
+                <label htmlFor="billing-months"><EventAvailableIcon /> Billing months per year</label>
+                <select
+                  id="billing-months"
+                  value={billingMonths}
+                  onChange={(e) => {
+                    const { value } = e.target
+                    setBillingMonths(value)
+                    setFieldError('billingMonths', validateField('billingMonths', value))
+                  }}
+                >
+                  {BILLING_MONTH_OPTIONS.map((option) => (
+                    <option key={option} value={option.toString()}>
+                      {option} {option === 1 ? 'month' : 'months'}
+                    </option>
+                  ))}
+                </select>
+                <p className={`input-helper ${fieldErrors.billingMonths ? 'input-helper--error' : ''}`}>
+                  {getHelperText('billingMonths')}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1752,7 +1829,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     </span>
                     <p className="bill-card__hint">
                       {monthlyUsageKwh !== null
-                        ? `${formatNumber(annualUsageNumber, { maximumFractionDigits: 0 })} kWh each year ÷ 12 months.`
+                        ? `${formatNumber(annualUsageNumber, { maximumFractionDigits: 0 })} kWh each year ÷ ${billingMonthsNumber} ${billingMonthsNumber === 1 ? 'month' : 'months'}.`
                         : 'Add annual usage to unlock this insight.'}
                     </p>
                   </div>
@@ -2045,7 +2122,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     </span>
                     <p className="snapshot-tile__caption">
                       {monthlyUsageKwh !== null
-                        ? 'Based on your annual usage entry divided across 12 months.'
+                        ? `Based on your annual usage entry divided across ${billingMonthsNumber} ${billingMonthsNumber === 1 ? 'month' : 'months'}.`
                         : 'Add annual usage above to see an average kWh figure.'}
                     </p>
                   </div>
@@ -2186,7 +2263,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                         <p className="metric-chip__label">Peak savings year</p>
                         <p className="metric-chip__value">
                           {hasPeakSavings && peakSavings
-                            ? `${peakSavings.year}: $${formatCurrency(peakSavings.Savings * 12)}`
+                            ? `${peakSavings.year}: $${formatCurrency(peakSavings.Savings * monthsPerYear)}`
                             : '--'}
                         </p>
                         <p className="metric-chip__caption">
