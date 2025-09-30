@@ -45,6 +45,7 @@ const SHAREABLE_FIELD_KEYS = [
   'scePecentage',
   'projectedFutureRateIncrease',
   'sunRunMonthlyCost',
+  'sunrunStartingRate',
   'sunrunEscalation',
   'projectionYears',
   'billingMonths'
@@ -193,6 +194,7 @@ const buildShareableCalculatorParams = (state, defaults) => {
     scePecentage: coerceToString(state.scePecentage),
     projectedFutureRateIncrease: coerceToString(state.projectedFutureRateIncrease),
     sunRunMonthlyCost: coerceToString(state.sunRunMonthlyCost),
+    sunrunStartingRate: coerceToString(state.sunrunStartingRate),
     sunrunEscalation: coerceToString(state.sunrunEscalation),
     projectionYears: clampProjectionYears(state.projectionYears),
     billingMonths: clampBillingMonths(Number(state.billingMonths ?? DEFAULT_BILLING_MONTHS)).toString()
@@ -207,6 +209,7 @@ const buildShareableCalculatorParams = (state, defaults) => {
     nextParams.usage !== '' ||
     nextParams.annualUsage !== '' ||
     nextParams.sunRunMonthlyCost !== '' ||
+    nextParams.sunrunStartingRate !== '' ||
     (nextParams.scePecentage !== '' && nextParams.scePecentage !== coerceToString(defaultProjectionIncrease)) ||
     (nextParams.projectedFutureRateIncrease !== '' &&
       nextParams.projectedFutureRateIncrease !== coerceToString(defaultBaselineIncrease)) ||
@@ -253,6 +256,11 @@ const FIELD_CONSTRAINTS = {
     min: 0,
     max: 5000,
     helper: 'Enter a Sunrun monthly cost between $0 and $5,000.'
+  },
+  sunrunStartingRate: {
+    min: 0,
+    max: 2,
+    helper: 'Enter a Sunrun starting rate between $0.00 and $2.00 per kWh. Add annual usage to auto-calculate the monthly cost.'
   },
   sunrunEscalation: {
     min: 0,
@@ -366,6 +374,17 @@ const formatRateDisplay = (value) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })}`
+}
+
+const formatRateInput = (value) => {
+  if (!Number.isFinite(value)) {
+    return ''
+  }
+
+  const rounded = Math.round(value * 10000) / 10000
+  const trimmed = rounded.toFixed(4).replace(/\.0+$/u, '').replace(/\.?0+$/u, '')
+
+  return trimmed === '' ? '0' : trimmed
 }
 
 const formatPercentageDeltaDisplay = (value) => {
@@ -519,6 +538,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [sunRunMonthlyCost, setSunRunMonthlyCost] = useState(() =>
     initialCalculatorParams?.sunRunMonthlyCost ?? ''
   )
+  const [sunrunStartingRate, setSunrunStartingRate] = useState(() =>
+    initialCalculatorParams?.sunrunStartingRate ?? ''
+  )
   const [sunrunEscalation, setSunrunEscalation] = useState(() =>
     initialCalculatorParams?.sunrunEscalation ??
     (initialUtilityConfig.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
@@ -546,6 +568,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [brushKey, setBrushKey] = useState(0)
   const previousUtilityRef = useRef(null)
   const lastSerializedCalculatorParamsRef = useRef(null)
+  const lastSunrunInputRef = useRef(
+    initialCalculatorParams?.sunrunStartingRate ? 'rate' : 'cost'
+  )
   const utilityConfig = UTILITY_CONFIGS[selectedUtility] ?? UTILITY_CONFIGS.sce
   const utilityShortName = utilityConfig.shortName
   const utilityDisplayName = utilityConfig.displayName
@@ -629,6 +654,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
           scePecentage,
           projectedFutureRateIncrease,
           sunRunMonthlyCost,
+          sunrunStartingRate,
           sunrunEscalation,
           projectionYears
         },
@@ -678,6 +704,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     scePecentage,
     selectedUtility,
     sunRunMonthlyCost,
+    sunrunStartingRate,
     sunrunEscalation,
     usage
   ])
@@ -768,6 +795,49 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
       setRate(null)
     }
   }
+
+  useEffect(() => {
+    if (!Number.isFinite(monthlyUsageKwh) || monthlyUsageKwh <= 0) {
+      return
+    }
+
+    if (lastSunrunInputRef.current === 'rate') {
+      const parsedRate = parseFloat(sunrunStartingRate)
+
+      if (!Number.isFinite(parsedRate)) {
+        return
+      }
+
+      const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
+
+      if (nextCost !== sunRunMonthlyCost) {
+        setSunRunMonthlyCost(nextCost)
+        setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', nextCost))
+      }
+
+      return
+    }
+
+    const parsedCost = parseFloat(sunRunMonthlyCost)
+
+    if (!Number.isFinite(parsedCost)) {
+      return
+    }
+
+    const derivedRate = parsedCost / monthlyUsageKwh
+    const formattedRate = formatRateInput(derivedRate)
+
+    if (formattedRate !== '' && formattedRate !== sunrunStartingRate) {
+      setSunrunStartingRate(formattedRate)
+      setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', formattedRate))
+    }
+  }, [
+    monthlyUsageKwh,
+    sunRunMonthlyCost,
+    sunrunStartingRate,
+    setFieldError,
+    validateField
+  ])
 
   const projectedBills = useMemo(() => {
     const monthlyBill = typeof avgPerMonthCost === 'string' ? parseFloat(avgPerMonthCost) : avgPerMonthCost
@@ -876,13 +946,14 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
     const isValid = validateFields({
       sunRunMonthlyCost,
+      sunrunStartingRate,
       sunrunEscalation
     })
 
     if (!isValid) {
       setSunrunProjectionStatus({
         type: 'error',
-        message: 'Enter a valid Sunrun monthly cost before updating the projection.'
+        message: 'Enter valid Sunrun plan details before updating the projection.'
       })
       return
     }
@@ -894,12 +965,12 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     if (canProject) {
       setSunrunProjectionStatus({
         type: 'success',
-        message: 'Projection updated with your Sunrun monthly cost.'
+        message: 'Projection updated with your Sunrun plan inputs.'
       })
     } else {
       setSunrunProjectionStatus({
         type: 'error',
-        message: 'Calculate the projected utility bill first, then enter a Sunrun cost to compare.'
+        message: 'Calculate the projected utility bill first, then enter Sunrun plan details to compare.'
       })
     }
   }
@@ -910,7 +981,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     setAnnualUsage('')
     setScePecentage(utilityConfig.defaults.projectedIncrease)
     setSunRunMonthlyCost('')
+    setSunrunStartingRate('')
     setSunrunEscalation(utilityConfig.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
+    lastSunrunInputRef.current = 'cost'
     setRate(null)
     setProjectedFutureRateIncrease(utilityConfig.defaults.baselineIncrease)
     setAvgPerMonthCost(null)
@@ -1048,6 +1121,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
   const projectedMonthlyBillNumber = rate !== null && projectedMonthlyBill ? parseFloat(projectedMonthlyBill) : null
   const sunrunMonthlyCostNumber = sunRunMonthlyCost ? parseFloat(sunRunMonthlyCost) : null
+  const sunrunStartingRateNumber = sunrunStartingRate ? parseFloat(sunrunStartingRate) : null
   const sunrunEscalationNumber = sunrunEscalation ? parseFloat(sunrunEscalation) : null
   const effectiveSunrunEscalation = Number.isFinite(sunrunEscalationNumber)
     ? sunrunEscalationNumber
@@ -1346,6 +1420,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
           maximumFractionDigits: 2
         })}`
         : null,
+      Number.isFinite(sunrunStartingRateNumber)
+        ? `Sunrun starting rate: ${formatRateDisplay(sunrunStartingRateNumber)} per kWh`
+        : null,
       sunrunMonthlyCostNumber !== null
         ? `Sunrun monthly cost: $${formatCurrency(sunrunMonthlyCostNumber, {
           minimumFractionDigits: 2,
@@ -1445,6 +1522,10 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
 
     if (projectedMonthlyBillNumber !== null) {
       lines.push(`Projected monthly ${utilityShortName} bill: ${formatDollars(projectedMonthlyBillNumber)}`)
+    }
+
+    if (Number.isFinite(sunrunStartingRateNumber)) {
+      lines.push(`Sunrun starting rate: ${formatDollars(sunrunStartingRateNumber)} per kWh`)
     }
 
     if (sunrunMonthlyCostNumber !== null) {
@@ -1872,11 +1953,11 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                     <span className="bill-card__value">
                       {sunrunAnnualCost !== null ? `$${formatCurrency(sunrunAnnualCost)}` : '--'}
                     </span>
-                    <p className="bill-card__hint">
+                  <p className="bill-card__hint">
                       {sunrunAnnualCost !== null && sunrunMonthlyCostNumber !== null
-                        ? `$${formatCurrency(sunrunMonthlyCostNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo plan.`
-                        : 'Enter a Sunrun monthly cost above.'}
-                    </p>
+                        ? `${Number.isFinite(sunrunStartingRateNumber) ? `${formatRateDisplay(sunrunStartingRateNumber)} start • ` : ''}$${formatCurrency(sunrunMonthlyCostNumber, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo plan.`
+                        : 'Enter a Sunrun monthly cost or starting rate above.'}
+                  </p>
                   </div>
                 </article>
 
@@ -1909,6 +1990,47 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                 <p className="warning-label">Compare against a Sunrun plan</p>
                 <div className="sunrun-input-grid">
                   <div className="sunrun-input-row">
+                    <label htmlFor="sunrun-starting-rate"><BoltTwoToneIcon /> Sunrun starting rate</label>
+                    <input
+                      id="sunrun-starting-rate"
+                      className={fieldErrors.sunrunStartingRate ? 'input-error' : ''}
+                      type="number"
+                      step="0.0001"
+                      min={FIELD_CONSTRAINTS.sunrunStartingRate.min}
+                      max={FIELD_CONSTRAINTS.sunrunStartingRate.max}
+                      value={sunrunStartingRate}
+                      onChange={(event) => {
+                        const { value } = event.target
+
+                        if (value === '') {
+                          setSunrunStartingRate('')
+                          setFieldError('sunrunStartingRate', null)
+                          lastSunrunInputRef.current = 'cost'
+                          setSunrunProjectionStatus(null)
+                          return
+                        }
+
+                        lastSunrunInputRef.current = 'rate'
+                        setSunrunStartingRate(value)
+                        setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', value))
+
+                        if (Number.isFinite(monthlyUsageKwh) && monthlyUsageKwh > 0) {
+                          const parsedRate = parseFloat(value)
+
+                          if (Number.isFinite(parsedRate)) {
+                            const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
+
+                            setSunRunMonthlyCost(nextCost)
+                            setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', nextCost))
+                          }
+                        }
+
+                        setSunrunProjectionStatus(null)
+                      }}
+                      placeholder="e.g. 0.29"
+                    />
+                  </div>
+                  <div className="sunrun-input-row">
                     <label htmlFor="sunrun-rate"><SolarPowerTwoToneIcon /> Sunrun monthly cost</label>
                     <input
                       id="sunrun-rate"
@@ -1920,8 +2042,25 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                       value={sunRunMonthlyCost}
                       onChange={(e) => {
                         const { value } = e.target
+                        lastSunrunInputRef.current = 'cost'
                         setSunRunMonthlyCost(value)
                         setFieldError('sunRunMonthlyCost', validateField('sunRunMonthlyCost', value))
+
+                        if (value === '') {
+                          setSunrunStartingRate('')
+                          setFieldError('sunrunStartingRate', null)
+                        } else if (Number.isFinite(monthlyUsageKwh) && monthlyUsageKwh > 0) {
+                          const parsedCost = parseFloat(value)
+
+                          if (Number.isFinite(parsedCost)) {
+                            const derivedRate = parsedCost / monthlyUsageKwh
+                            const formattedRate = formatRateInput(derivedRate)
+
+                            setSunrunStartingRate(formattedRate)
+                            setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', formattedRate))
+                          }
+                        }
+
                         setSunrunProjectionStatus(null)
                       }}
                       placeholder="e.g. 185.00"
@@ -1948,6 +2087,9 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   </div>
                 </div>
                 <div className="sunrun-input-helpers">
+                  <p className={`input-helper ${fieldErrors.sunrunStartingRate ? 'input-helper--error' : ''}`}>
+                    {getHelperText('sunrunStartingRate')}
+                  </p>
                   <p className={`input-helper ${fieldErrors.sunRunMonthlyCost ? 'input-helper--error' : ''}`}>
                     {getHelperText('sunRunMonthlyCost')}
                   </p>
@@ -2010,7 +2152,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                         : `Plan for about $${formatCurrencyAbsolute(firstYearDifference)} more in year one at this rate.`
                       : monthlyDifference !== null && monthlyDifference < 0
                         ? 'Sunrun currently costs more—lower the starting rate to find savings.'
-                        : 'Enter a Sunrun monthly cost to view first-year differences.'}
+                        : 'Add Sunrun plan details to view first-year differences.'}
                   </p>
                 </article>
 
@@ -2029,7 +2171,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                         : `Annual added cost by ${finalYearLabel ?? 'final year'} with your inputs.`
                       : monthlyDifference !== null && monthlyDifference < 0
                         ? `Sunrun stays above ${utilityShortName} across this window.`
-                        : 'Add a Sunrun monthly cost to see multi-year comparisons.'}
+                        : 'Add Sunrun plan details to see multi-year comparisons.'}
                   </p>
                 </article>
                 <article className="insight-card accent-violet animatable" data-animate style={{ '--delay': '0.4s' }}>
@@ -2061,7 +2203,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                       ? hasPositiveTotalSavings
                         ? 'Total projected savings across your full horizon.'
                         : 'Sunrun costs more overall—tweak the starting price or escalations to find savings.'
-                      : 'Add a Sunrun monthly cost to compare total spending.'}
+                      : 'Add Sunrun plan details to compare total spending.'}
                   </p>
                 </article>
                 <article className="insight-card accent-indigo animatable" data-animate style={{ '--delay': '0.52s' }}>
@@ -2087,6 +2229,12 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                   <div className="assumption-metric">
                     <span className="assumption-metric__label">Baseline {utilityShortName} increase</span>
                     <span className="assumption-metric__value">{hasBaselineIncrease ? formatPercentage(parsedBaselineIncrease) : '--'}</span>
+                  </div>
+                  <div className="assumption-metric">
+                    <span className="assumption-metric__label">Sunrun starting rate</span>
+                    <span className="assumption-metric__value">
+                      {Number.isFinite(sunrunStartingRateNumber) ? formatRateDisplay(sunrunStartingRateNumber) : '--'}
+                    </span>
                   </div>
                   <div className="assumption-metric">
                     <span className="assumption-metric__label">Sunrun escalation</span>
@@ -2174,7 +2322,7 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                             </span>
                           )}
                         </>
-                      ) : 'Add a Sunrun monthly cost to compare annual spend.'}
+                      ) : 'Add Sunrun plan details to compare annual spend.'}
                     </p>
                   </div>
                 </div>
