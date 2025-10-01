@@ -293,6 +293,38 @@ body::after {
   }
 }
 
+@media (max-width: 640px) {
+  body {
+    background-attachment: scroll;
+    background-size: 180% 180%;
+    animation: none;
+  }
+
+  body::before,
+  body::after {
+    display: none;
+  }
+
+  .app-shell {
+    align-items: stretch;
+    padding: clamp(24px, 8vw, 40px) clamp(12px, 6vw, 20px) 48px;
+  }
+
+  .app-shell__inner {
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .app-switcher {
+    width: 100%;
+    padding: 8px;
+  }
+
+  .app-switcher__button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   .app-theme-toggle__label {
     display: none;
@@ -300,6 +332,8 @@ body::after {
 
   .app-theme-toggle {
     padding-inline: 10px;
+    width: 100%;
+    justify-content: center;
   }
 }
 
