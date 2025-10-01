@@ -391,17 +391,6 @@ const formatRateDisplay = (value) => {
   })}`
 }
 
-const formatRateInput = (value) => {
-  if (!Number.isFinite(value)) {
-    return ''
-  }
-
-  const rounded = Math.round(value * 10000) / 10000
-  const trimmed = rounded.toFixed(4).replace(/\.0+$/u, '').replace(/\.?0+$/u, '')
-
-  return trimmed === '' ? '0' : trimmed
-}
-
 const formatPercentageDeltaDisplay = (value) => {
   if (value === null || Number.isNaN(value)) {
     return '--'
@@ -583,9 +572,6 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
   const [brushKey, setBrushKey] = useState(0)
   const previousUtilityRef = useRef(null)
   const lastSerializedCalculatorParamsRef = useRef(null)
-  const lastSunrunInputRef = useRef(
-    initialCalculatorParams?.sunrunStartingRate ? 'rate' : 'cost'
-  )
   const utilityConfig = UTILITY_CONFIGS[selectedUtility] ?? UTILITY_CONFIGS.sce
   const utilityShortName = utilityConfig.shortName
   const utilityDisplayName = utilityConfig.displayName
@@ -811,49 +797,6 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     }
   }
 
-  useEffect(() => {
-    if (!Number.isFinite(monthlyUsageKwh) || monthlyUsageKwh <= 0) {
-      return
-    }
-
-    if (lastSunrunInputRef.current === 'rate') {
-      const parsedRate = parseFloat(sunrunStartingRate)
-
-      if (!Number.isFinite(parsedRate)) {
-        return
-      }
-
-      const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
-
-      if (nextCost !== sunrunMonthlyCost) {
-        setSunrunMonthlyCost(nextCost)
-        setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', nextCost))
-      }
-
-      return
-    }
-
-    const parsedCost = parseFloat(sunrunMonthlyCost)
-
-    if (!Number.isFinite(parsedCost)) {
-      return
-    }
-
-    const derivedRate = parsedCost / monthlyUsageKwh
-    const formattedRate = formatRateInput(derivedRate)
-
-    if (formattedRate !== '' && formattedRate !== sunrunStartingRate) {
-      setSunrunStartingRate(formattedRate)
-      setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', formattedRate))
-    }
-  }, [
-    monthlyUsageKwh,
-    sunrunMonthlyCost,
-    sunrunStartingRate,
-    setFieldError,
-    validateField
-  ])
-
   const projectedBills = useMemo(() => {
     const monthlyBill = typeof avgPerMonthCost === 'string' ? parseFloat(avgPerMonthCost) : avgPerMonthCost
     const sunrunStart = typeof sunrunMonthlyCost === 'string' ? parseFloat(sunrunMonthlyCost) : sunrunMonthlyCost
@@ -998,7 +941,6 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
     setSunrunMonthlyCost('')
     setSunrunStartingRate('')
     setSunrunEscalation(utilityConfig.defaults.sunrunEscalation ?? DEFAULT_SUNRUN_ESCALATION.toString())
-    lastSunrunInputRef.current = 'cost'
     setRate(null)
     setProjectedFutureRateIncrease(utilityConfig.defaults.baselineIncrease)
     setAvgPerMonthCost(null)
@@ -2020,25 +1962,12 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                         if (value === '') {
                           setSunrunStartingRate('')
                           setFieldError('sunrunStartingRate', null)
-                          lastSunrunInputRef.current = 'cost'
                           setSunrunProjectionStatus(null)
                           return
                         }
 
-                        lastSunrunInputRef.current = 'rate'
                         setSunrunStartingRate(value)
                         setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', value))
-
-                        if (Number.isFinite(monthlyUsageKwh) && monthlyUsageKwh > 0) {
-                          const parsedRate = parseFloat(value)
-
-                          if (Number.isFinite(parsedRate)) {
-                            const nextCost = (parsedRate * monthlyUsageKwh).toFixed(2)
-
-                            setSunrunMonthlyCost(nextCost)
-                            setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', nextCost))
-                          }
-                        }
 
                         setSunrunProjectionStatus(null)
                       }}
@@ -2057,24 +1986,8 @@ const Calculator = ({ initialUtility = 'sce', allowUtilitySelection = false, id 
                       value={sunrunMonthlyCost}
                       onChange={(e) => {
                         const { value } = e.target
-                        lastSunrunInputRef.current = 'cost'
                         setSunrunMonthlyCost(value)
                         setFieldError('sunrunMonthlyCost', validateField('sunrunMonthlyCost', value))
-
-                        if (value === '') {
-                          setSunrunStartingRate('')
-                          setFieldError('sunrunStartingRate', null)
-                        } else if (Number.isFinite(monthlyUsageKwh) && monthlyUsageKwh > 0) {
-                          const parsedCost = parseFloat(value)
-
-                          if (Number.isFinite(parsedCost)) {
-                            const derivedRate = parsedCost / monthlyUsageKwh
-                            const formattedRate = formatRateInput(derivedRate)
-
-                            setSunrunStartingRate(formattedRate)
-                            setFieldError('sunrunStartingRate', validateField('sunrunStartingRate', formattedRate))
-                          }
-                        }
 
                         setSunrunProjectionStatus(null)
                       }}
