@@ -742,6 +742,107 @@ button:hover::after {
 }
 
 @media (max-width: 640px) {
+  .calculator-container {
+    padding: 0;
+    gap: 24px;
+  }
+
+  .calculator-header {
+    text-align: left;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .calculator-badge {
+    align-self: flex-start;
+  }
+
+  .calculator-header h1 {
+    justify-content: flex-start;
+    font-size: clamp(1.8rem, 5vw, 2.2rem);
+  }
+
+  .calculator-header p {
+    margin: 0;
+  }
+
+  .header-pills {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .header-pills span {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .calculator-grid {
+    gap: 20px;
+  }
+
+  .surface-card {
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 16px 32px var(--shadow-card);
+  }
+
+  .surface-card::before {
+    display: none;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 0.95rem;
+  }
+
+  .sunrun-input-container {
+    padding: 16px;
+  }
+
+  .sunrun-input-grid,
+  .sunrun-input-helpers {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .insight-highlights {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(240px, 85%);
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin: 0 -4px;
+    padding-inline: 4px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+  }
+
+  .insight-card {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .projection-actions__buttons {
+    width: 100%;
+  }
+
+  .savings-summary__grid,
+  .assumption-panel__grid,
+  .homeowner-snapshot__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .yearly-breakdown__table-wrapper {
+    margin-inline: -4px;
+  }
+}
+
+@media (max-width: 640px) {
   .bill-card {
     padding: 18px;
     border-radius: 18px;
@@ -2299,6 +2400,19 @@ button:hover::after {
     font-size: 0.95rem;
     width: auto;
     max-width: 200px;
+  }
+
+  .surface-card {
+    padding: 18px;
+  }
+
+  .insight-highlights {
+    grid-auto-columns: minmax(220px, 90%);
+  }
+
+  .yearly-breakdown__table th,
+  .yearly-breakdown__table td {
+    padding: 12px 14px;
   }
 }
 
